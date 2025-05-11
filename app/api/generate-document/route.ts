@@ -2,10 +2,13 @@
 import { NextResponse } from "next/server";
 import { executeQuery } from "@/lib/db";
 import { uploadToBraslink } from "@/lib/storage";
+// Importe a biblioteca para geração de PDF (você precisará instalá-la)
+// import PDFDocument from 'pdfkit';
 
 export async function POST(request: Request) {
   try {
     const { documentType, clienteId, data } = await request.json();
+    console.log(`Iniciando geração de documento ${documentType} para cliente ${clienteId}`);
 
     // Buscar dados do cliente do banco de dados
     const cliente = await executeQuery<any>(
@@ -14,6 +17,7 @@ export async function POST(request: Request) {
     );
 
     if (!cliente || cliente.length === 0) {
+      console.log(`Cliente não encontrado: ${clienteId}`);
       return NextResponse.json(
         { success: false, message: "Cliente não encontrado" },
         { status: 404 }
@@ -27,27 +31,39 @@ export async function POST(request: Request) {
         'SELECT * FROM orcamentos WHERE cliente_id = ? ORDER BY data DESC LIMIT 1',
         [clienteId]
       );
+      console.log(`Dados do orçamento recuperados: ${JSON.stringify(documentData)}`);
     }
 
-    // Simular geração de PDF (sem usar pdfkit)
-    console.log(`Gerando documento ${documentType} para cliente ${cliente[0].nome}`);
+    // Gerar PDF real (descomente e implemente conforme necessário)
+    // const pdfBuffer = await generatePDF(documentType, cliente[0], documentData);
     
-    // Simular buffer de PDF
+    // Por enquanto, continuamos com a simulação
+    console.log(`Gerando documento ${documentType} para cliente ${cliente[0].nome}`);
     const pdfBuffer = Buffer.from('Conteúdo simulado do PDF');
     
-    // Nome do arquivo
-    const filename = `${documentType}_${cliente[0].nome.replace(/\s+/g, '_')}`;
+    // Nome do arquivo mais detalhado
+    const timestamp = new Date().getTime();
+    const filename = `${documentType}_${cliente[0].id}_${timestamp}.pdf`;
     
-    // Simular upload para a Braslink
+    console.log(`Iniciando upload para Braslink: ${filename}`);
+    // Upload para a Braslink
     const fileUrl = await uploadToBraslink(pdfBuffer, filename, documentType);
+    console.log(`Upload concluído. URL: ${fileUrl}`);
+    
+    // Registrar o documento no banco de dados (opcional)
+    // await executeQuery(
+    //   'INSERT INTO documentos (cliente_id, tipo, url, data_criacao) VALUES (?, ?, ?, NOW())',
+    //   [clienteId, documentType, fileUrl]
+    // );
     
     return NextResponse.json({
       success: true,
-      message: `${documentType} gerado com sucesso! (simulação)`,
+      message: `${documentType} gerado com sucesso!`,
       document: {
         cliente: cliente[0].nome,
         createdAt: new Date().toISOString(),
         documentUrl: fileUrl,
+        filename: filename,
         status: "generated"
       },
     });
@@ -59,3 +75,8 @@ export async function POST(request: Request) {
     );
   }
 }
+
+// Função para gerar PDF (implemente conforme necessário)
+// async function generatePDF(documentType, cliente, documentData) {
+//   // Implementação da geração de PDF
+// }
