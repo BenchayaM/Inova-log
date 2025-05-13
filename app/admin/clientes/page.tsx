@@ -19,19 +19,15 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Search, Plus, Edit, Trash2, Eye, Loader2 } from 'lucide-react'
+import { Search, Plus, Edit, Trash2, Eye, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { getLanguage, translations } from "@/lib/i18n"
-// Importar os componentes de edição e visualização
+import type { Cliente } from "@/lib/clients"
 import EditarCliente from "./editar-cliente"
 import VisualizarCliente from "./visualizar-cliente"
-// Importar o tipo Cliente do arquivo clients.ts
-import type { Cliente } from "@/lib/clients"
 
 export default function ClientesPage() {
-  // Estado para armazenar clientes do banco de dados
   const [clientes, setClientes] = useState<Cliente[]>([])
-  // Estado para indicar carregamento
   const [loading, setLoading] = useState(true)
   const [termoBusca, setTermoBusca] = useState("")
   const [novoCliente, setNovoCliente] = useState<Partial<Cliente>>({
@@ -45,29 +41,36 @@ export default function ClientesPage() {
     cep: "",
     contato: "",
     status: "Ativo",
+    // Novos campos
+    telefone_secundario: "",
+    website: "",
+    cargo_contato: "",
+    cnpj_cpf: "",
+    inscricao_estadual: "",
+    regime_tributario: "",
+    segmento: "",
+    condicoes_pagamento: "",
+    classificacao: "",
+    origem: "",
+    observacoes: "",
   })
   const [dialogAberto, setDialogAberto] = useState(false)
   const [tabAtiva, setTabAtiva] = useState("informacoes")
   const [language, setLanguage] = useState<"pt" | "en">("pt")
-  // Estado para indicar salvamento em progresso
   const [salvando, setSalvando] = useState(false)
-  // Estados para controlar a edição de cliente
-  const [clienteEditandoId, setClienteEditandoId] = useState<number | null>(null)
-  const [dialogEdicaoAberto, setDialogEdicaoAberto] = useState(false)
-  // Estados para controlar a visualização de cliente
-  const [clienteVisualizandoId, setClienteVisualizandoId] = useState<number | null>(null)
-  const [dialogVisualizacaoAberto, setDialogVisualizacaoAberto] = useState(false)
+  const [clienteSelecionado, setClienteSelecionado] = useState<number | null>(null)
+  const [editarDialogAberto, setEditarDialogAberto] = useState(false)
+  const [visualizarDialogAberto, setVisualizarDialogAberto] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
     setLanguage(getLanguage())
-    // Carregar clientes ao montar o componente
     carregarClientes()
   }, [])
 
   const t = translations[language]
 
-  // Função para carregar clientes do banco de dados
+  // Carregar clientes do banco de dados
   const carregarClientes = async () => {
     setLoading(true)
     try {
@@ -134,7 +137,7 @@ export default function ClientesPage() {
       !confirm(
         language === "pt"
           ? "Tem certeza que deseja excluir este cliente?"
-          : "Are you sure you want to delete this client?"
+          : "Are you sure you want to delete this client?",
       )
     ) {
       return
@@ -171,13 +174,26 @@ export default function ClientesPage() {
   }
 
   // Manipular mudanças no formulário
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     setNovoCliente((prev) => ({ ...prev, [name]: value }))
   }
 
-  // Adicionar novo cliente (agora conectado à API)
+  // Adicionar novo cliente
   const adicionarCliente = async () => {
+    // Validar campos obrigatórios
+    if (!novoCliente.nome || !novoCliente.email || !novoCliente.telefone) {
+      toast({
+        title: language === "pt" ? "Erro" : "Error",
+        description:
+          language === "pt"
+            ? "Preencha os campos obrigatórios (Nome, Email e Telefone)"
+            : "Fill in the required fields (Name, Email and Phone)",
+        variant: "destructive",
+      })
+      return
+    }
+
     setSalvando(true)
 
     try {
@@ -212,6 +228,17 @@ export default function ClientesPage() {
           cep: "",
           contato: "",
           status: "Ativo",
+          telefone_secundario: "",
+          website: "",
+          cargo_contato: "",
+          cnpj_cpf: "",
+          inscricao_estadual: "",
+          regime_tributario: "",
+          segmento: "",
+          condicoes_pagamento: "",
+          classificacao: "",
+          origem: "",
+          observacoes: "",
         })
         setDialogAberto(false)
         setTabAtiva("informacoes")
@@ -237,6 +264,11 @@ export default function ClientesPage() {
     }
   }
 
+  // Formatar ID para exibição
+  const formatarId = (id: number) => {
+    return `CLI-${id.toString().padStart(3, "0")}`
+  }
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
@@ -252,31 +284,40 @@ export default function ClientesPage() {
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
               <DialogTitle>{t.addClient}</DialogTitle>
-              <DialogDescription>{t.clientData}</DialogDescription>
+              <DialogDescription>
+                {t.clientData} <span className="text-red-500">*</span> Campos obrigatórios
+              </DialogDescription>
             </DialogHeader>
 
             <Tabs value={tabAtiva} onValueChange={setTabAtiva} className="w-full mt-4">
-              <TabsList className="grid grid-cols-2">
+              <TabsList className="grid grid-cols-4">
                 <TabsTrigger value="informacoes">{t.generalInfo}</TabsTrigger>
+                <TabsTrigger value="fiscal">Informações Fiscais</TabsTrigger>
                 <TabsTrigger value="endereco">{t.addressInfo}</TabsTrigger>
+                <TabsTrigger value="comercial">Informações Comerciais</TabsTrigger>
               </TabsList>
 
               <TabsContent value="informacoes" className="space-y-4 mt-4">
                 <div className="grid gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="nome">{t.companyName}</Label>
+                    <Label htmlFor="nome" className="flex items-center">
+                      {t.companyName} <span className="text-red-500 ml-1">*</span>
+                    </Label>
                     <Input
                       id="nome"
                       name="nome"
                       value={novoCliente.nome}
                       onChange={handleChange}
                       placeholder={language === "pt" ? "Nome da empresa" : "Company name"}
+                      required
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="email" className="flex items-center">
+                        Email <span className="text-red-500 ml-1">*</span>
+                      </Label>
                       <Input
                         id="email"
                         name="email"
@@ -284,29 +325,133 @@ export default function ClientesPage() {
                         value={novoCliente.email}
                         onChange={handleChange}
                         placeholder={language === "pt" ? "contato@empresa.com" : "contact@company.com"}
+                        required
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="telefone">{language === "pt" ? "Telefone" : "Phone"}</Label>
+                      <Label htmlFor="telefone" className="flex items-center">
+                        {language === "pt" ? "Telefone" : "Phone"} <span className="text-red-500 ml-1">*</span>
+                      </Label>
                       <Input
                         id="telefone"
                         name="telefone"
                         value={novoCliente.telefone}
                         onChange={handleChange}
                         placeholder="(00) 0000-0000"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="telefone_secundario">
+                        {language === "pt" ? "Telefone Secundário" : "Secondary Phone"}
+                      </Label>
+                      <Input
+                        id="telefone_secundario"
+                        name="telefone_secundario"
+                        value={novoCliente.telefone_secundario}
+                        onChange={handleChange}
+                        placeholder="(00) 0000-0000"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="website">Website</Label>
+                      <Input
+                        id="website"
+                        name="website"
+                        value={novoCliente.website}
+                        onChange={handleChange}
+                        placeholder="www.empresa.com.br"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="contato">{t.contactPerson}</Label>
+                      <Input
+                        id="contato"
+                        name="contato"
+                        value={novoCliente.contato}
+                        onChange={handleChange}
+                        placeholder={language === "pt" ? "Nome do contato principal" : "Main contact name"}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="cargo_contato">
+                        {language === "pt" ? "Cargo do Contato" : "Contact Position"}
+                      </Label>
+                      <Input
+                        id="cargo_contato"
+                        name="cargo_contato"
+                        value={novoCliente.cargo_contato}
+                        onChange={handleChange}
+                        placeholder={language === "pt" ? "Diretor, Gerente, etc." : "Director, Manager, etc."}
                       />
                     </div>
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="contato">{t.contactPerson}</Label>
-                    <Input
-                      id="contato"
-                      name="contato"
-                      value={novoCliente.contato}
+                    <Label htmlFor="status">Status</Label>
+                    <select
+                      id="status"
+                      name="status"
+                      value={novoCliente.status}
                       onChange={handleChange}
-                      placeholder={language === "pt" ? "Nome do contato principal" : "Main contact name"}
-                    />
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="Ativo">{t.active}</option>
+                      <option value="Inativo">{t.inactive}</option>
+                    </select>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="fiscal" className="space-y-4 mt-4">
+                <div className="grid gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="cnpj_cpf">CNPJ/CPF</Label>
+                      <Input
+                        id="cnpj_cpf"
+                        name="cnpj_cpf"
+                        value={novoCliente.cnpj_cpf}
+                        onChange={handleChange}
+                        placeholder="00.000.000/0000-00"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="inscricao_estadual">
+                        {language === "pt" ? "Inscrição Estadual" : "State Registration"}
+                      </Label>
+                      <Input
+                        id="inscricao_estadual"
+                        name="inscricao_estadual"
+                        value={novoCliente.inscricao_estadual}
+                        onChange={handleChange}
+                        placeholder={language === "pt" ? "Inscrição Estadual" : "State Registration"}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="regime_tributario">{language === "pt" ? "Regime Tributário" : "Tax Regime"}</Label>
+                    <select
+                      id="regime_tributario"
+                      name="regime_tributario"
+                      value={novoCliente.regime_tributario}
+                      onChange={handleChange}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="">{language === "pt" ? "Selecione..." : "Select..."}</option>
+                      <option value="Simples Nacional">Simples Nacional</option>
+                      <option value="Lucro Presumido">Lucro Presumido</option>
+                      <option value="Lucro Real">Lucro Real</option>
+                      <option value="MEI">MEI</option>
+                      <option value="Outro">{language === "pt" ? "Outro" : "Other"}</option>
+                    </select>
                   </div>
                 </div>
               </TabsContent>
@@ -368,6 +513,94 @@ export default function ClientesPage() {
                         placeholder={language === "pt" ? "CEP" : "Postal Code"}
                       />
                     </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="comercial" className="space-y-4 mt-4">
+                <div className="grid gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="segmento">
+                        {language === "pt" ? "Segmento/Ramo de Atividade" : "Business Segment"}
+                      </Label>
+                      <Input
+                        id="segmento"
+                        name="segmento"
+                        value={novoCliente.segmento}
+                        onChange={handleChange}
+                        placeholder={
+                          language === "pt" ? "Ex: Construção Civil, Varejo, etc." : "Ex: Construction, Retail, etc."
+                        }
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="condicoes_pagamento">
+                        {language === "pt" ? "Condições de Pagamento" : "Payment Terms"}
+                      </Label>
+                      <Input
+                        id="condicoes_pagamento"
+                        name="condicoes_pagamento"
+                        value={novoCliente.condicoes_pagamento}
+                        onChange={handleChange}
+                        placeholder={
+                          language === "pt" ? "Ex: 30/60/90 dias, À vista, etc." : "Ex: 30/60/90 days, Cash, etc."
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="classificacao">
+                        {language === "pt" ? "Classificação do Cliente" : "Client Classification"}
+                      </Label>
+                      <select
+                        id="classificacao"
+                        name="classificacao"
+                        value={novoCliente.classificacao}
+                        onChange={handleChange}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="">{language === "pt" ? "Selecione..." : "Select..."}</option>
+                        <option value="A">A (Premium)</option>
+                        <option value="B">B ({language === "pt" ? "Intermediário" : "Intermediate"})</option>
+                        <option value="C">C ({language === "pt" ? "Básico" : "Basic"})</option>
+                        <option value="VIP">VIP</option>
+                        <option value="Regular">Regular</option>
+                        <option value="Ocasional">{language === "pt" ? "Ocasional" : "Occasional"}</option>
+                      </select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="origem">{language === "pt" ? "Origem do Cliente" : "Client Source"}</Label>
+                      <Input
+                        id="origem"
+                        name="origem"
+                        value={novoCliente.origem}
+                        onChange={handleChange}
+                        placeholder={
+                          language === "pt"
+                            ? "Ex: Indicação, Site, Redes Sociais, etc."
+                            : "Ex: Referral, Website, Social Media, etc."
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="observacoes">{language === "pt" ? "Observações" : "Notes"}</Label>
+                    <textarea
+                      id="observacoes"
+                      name="observacoes"
+                      value={novoCliente.observacoes}
+                      onChange={handleChange}
+                      placeholder={
+                        language === "pt"
+                          ? "Observações adicionais sobre o cliente"
+                          : "Additional notes about the client"
+                      }
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
                   </div>
                 </div>
               </TabsContent>
@@ -462,7 +695,7 @@ export default function ClientesPage() {
               ) : (
                 clientes.map((cliente) => (
                   <TableRow key={cliente.id}>
-                    <TableCell className="font-medium">{cliente.id}</TableCell>
+                    <TableCell className="font-medium">{formatarId(cliente.id!)}</TableCell>
                     <TableCell>{cliente.nome}</TableCell>
                     <TableCell className="hidden md:table-cell">{cliente.email}</TableCell>
                     <TableCell className="hidden lg:table-cell">
@@ -480,8 +713,8 @@ export default function ClientesPage() {
                           variant="outline"
                           size="icon"
                           onClick={() => {
-                            setClienteVisualizandoId(Number(cliente.id));
-                            setDialogVisualizacaoAberto(true);
+                            setClienteSelecionado(cliente.id!)
+                            setVisualizarDialogAberto(true)
                           }}
                         >
                           <Eye className="h-4 w-4" />
@@ -490,13 +723,13 @@ export default function ClientesPage() {
                           variant="outline"
                           size="icon"
                           onClick={() => {
-                            setClienteEditandoId(Number(cliente.id));
-                            setDialogEdicaoAberto(true);
+                            setClienteSelecionado(cliente.id!)
+                            setEditarDialogAberto(true)
                           }}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="icon" onClick={() => excluirCliente(Number(cliente.id))}>
+                        <Button variant="outline" size="icon" onClick={() => excluirCliente(cliente.id!)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -511,17 +744,17 @@ export default function ClientesPage() {
 
       {/* Componente de edição de cliente */}
       <EditarCliente
-        clienteId={clienteEditandoId}
-        aberto={dialogEdicaoAberto}
-        onOpenChange={setDialogEdicaoAberto}
+        clienteId={clienteSelecionado}
+        aberto={editarDialogAberto}
+        onOpenChange={setEditarDialogAberto}
         onClienteAtualizado={carregarClientes}
       />
 
       {/* Componente de visualização de cliente */}
       <VisualizarCliente
-        clienteId={clienteVisualizandoId}
-        aberto={dialogVisualizacaoAberto}
-        onOpenChange={setDialogVisualizacaoAberto}
+        clienteId={clienteSelecionado}
+        aberto={visualizarDialogAberto}
+        onOpenChange={setVisualizarDialogAberto}
       />
     </div>
   )
