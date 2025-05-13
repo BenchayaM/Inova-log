@@ -97,15 +97,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Validar apenas campos obrigatórios
-    if (!body.nome || !body.email || !body.telefone) {
+    if (!body.nome || !body.email) {
       console.log("Campos obrigatórios não preenchidos:", {
         nome: body.nome,
         email: body.email,
-        telefone: body.telefone,
       })
 
       return NextResponse.json(
-        { success: false, message: "Campos obrigatórios não preenchidos" },
+        { success: false, message: "Campos obrigatórios não preenchidos (nome e email)" },
         { status: 400, headers },
       )
     }
@@ -114,9 +113,22 @@ export async function POST(request: NextRequest) {
     const cliente: Cliente = {
       nome: body.nome,
       email: body.email,
-      telefone: body.telefone,
-      status: "Ativo",
     }
+
+    // Adicionar campos opcionais se fornecidos
+    if (body.telefone) cliente.telefone = body.telefone
+    if (body.endereco) cliente.endereco = body.endereco
+    if (body.cidade) cliente.cidade = body.cidade
+    if (body.estado) cliente.estado = body.estado
+    if (body.pais) cliente.pais = body.pais
+    if (body.cep) cliente.cep = body.cep
+    if (body.contato) cliente.contato = body.contato
+    if (body.status) cliente.status = body.status
+    if (body.cnpj_cpf) cliente.cnpj_cpf = body.cnpj_cpf
+    if (body.inscricao_estadual) cliente.inscricao_estadual = body.inscricao_estadual
+    if (body.cargo_contato) cliente.cargo_contato = body.cargo_contato
+    if (body.segmento) cliente.segmento = body.segmento
+    if (body.observacoes) cliente.observacoes = body.observacoes
 
     console.log("Cliente a ser adicionado:", cliente)
     const result = await adicionarCliente(cliente)
