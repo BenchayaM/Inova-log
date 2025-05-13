@@ -59,38 +59,40 @@ export async function buscarClientePorId(id: number) {
 // Adicionar novo cliente
 export async function adicionarCliente(cliente: Cliente) {
   try {
-    const result = await query(
-      `INSERT INTO clientes (
-        nome, email, telefone, endereco, cidade, estado, pais, 
-        cep, contato, status, observacoes, telefone_secundario, 
-        website, cargo_contato, cnpj_cpf, inscricao_estadual, 
-        regime_tributario, segmento, condicoes_pagamento, 
-        classificacao, origem
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        cliente.nome,
-        cliente.email,
-        cliente.telefone,
-        cliente.endereco || null,
-        cliente.cidade || null,
-        cliente.estado || null,
-        cliente.pais || "Brasil",
-        cliente.cep || null,
-        cliente.contato || null,
-        cliente.status,
-        cliente.observacoes || null,
-        cliente.telefone_secundario || null,
-        cliente.website || null,
-        cliente.cargo_contato || null,
-        cliente.cnpj_cpf || null,
-        cliente.inscricao_estadual || null,
-        cliente.regime_tributario || null,
-        cliente.segmento || null,
-        cliente.condicoes_pagamento || null,
-        cliente.classificacao || null,
-        cliente.origem || null,
-      ],
-    )
+    console.log("Construindo query SQL para adicionar cliente") // Log para depuração
+
+    // Verificar se há campos vazios e removê-los
+    Object.keys(cliente).forEach((key) => {
+      if (cliente[key as keyof Cliente] === "") {
+        delete cliente[key as keyof Cliente]
+      }
+    })
+
+    // Construir a query dinamicamente com base nos campos fornecidos
+    const campos: string[] = []
+    const placeholders: string[] = []
+    const valores: any[] = []
+
+    // Adicionar cada campo não nulo à query
+    Object.entries(cliente).forEach(([key, value]) => {
+      if (key !== "id" && key !== "data_cadastro" && value !== undefined && value !== null) {
+        campos.push(key)
+        placeholders.push("?")
+        valores.push(value)
+      }
+    })
+
+    // Verificar se há campos para inserir
+    if (campos.length === 0) {
+      return { success: false, message: "Nenhum campo válido para inserção" }
+    }
+
+    const sql = `INSERT INTO clientes (${campos.join(", ")}) VALUES (${placeholders.join(", ")})`
+    console.log("SQL Query:", sql) // Log para depuração
+    console.log("Valores:", valores) // Log para depuração
+
+    const result = await query(sql, valores)
+    console.log("Resultado da query:", result) // Log para depuração
 
     if (result.success) {
       return {
@@ -99,28 +101,44 @@ export async function adicionarCliente(cliente: Cliente) {
         id: (result.data as any).insertId,
       }
     } else {
-      return { success: false, message: "Erro ao adicionar cliente" }
+      console.error("Erro retornado pela query:", result.message) // Log para depuração
+      return { success: false, message: result.message || "Erro ao adicionar cliente" }
     }
   } catch (error) {
-    console.error("Erro ao adicionar cliente:", error)
-    return { success: false, message: "Erro ao adicionar cliente" }
+    console.error("Exceção ao adicionar cliente:", error) // Log para depuração
+    return {
+      success: false,
+      message: "Erro ao adicionar cliente: " + (error instanceof Error ? error.message : String(error)),
+    }
   }
 }
 
 // Atualizar cliente existente
 export async function atualizarCliente(id: number, cliente: Partial<Cliente>) {
   try {
+    // Verificar se há campos vazios e removê-los
+    Object.keys(cliente).forEach((key) => {
+      if (cliente[key as keyof Partial<Cliente>] === "") {
+        delete cliente[key as keyof Partial<Cliente>]
+      }
+    })
+
     // Construir a query dinamicamente com base nos campos fornecidos
     const updateFields: string[] = []
     const values: any[] = []
 
     // Adicionar cada campo não nulo à query
     Object.entries(cliente).forEach(([key, value]) => {
-      if (value !== undefined && key !== "id" && key !== "data_cadastro") {
+      if (value !== undefined && value !== null && key !== "id" && key !== "data_cadastro") {
         updateFields.push(`${key} = ?`)
         values.push(value)
       }
     })
+
+    // Verificar se há campos para atualizar
+    if (updateFields.length === 0) {
+      return { success: false, message: "Nenhum campo válido para atualização" }
+    }
 
     // Adicionar o ID ao final dos valores
     values.push(id)
