@@ -40,6 +40,11 @@ export default function VisualizarCliente({ clienteId, aberto, onOpenChange }: V
     setCarregando(true)
     try {
       const response = await fetch(`/api/clientes/${id}`)
+
+      if (!response.ok) {
+        throw new Error(`Erro HTTP: ${response.status}`)
+      }
+
       const data = await response.json()
 
       if (data.success) {
@@ -65,22 +70,6 @@ export default function VisualizarCliente({ clienteId, aberto, onOpenChange }: V
     }
   }
 
-  // Formatar ID para exibição
-  const formatarId = (id: number) => {
-    return `CLI-${id.toString().padStart(3, "0")}`
-  }
-
-  // Formatar data para exibição
-  const formatarData = (data: string | Date) => {
-    if (!data) return "-"
-    const dataObj = new Date(data)
-    return dataObj.toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    })
-  }
-
   return (
     <Dialog open={aberto} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
@@ -102,7 +91,7 @@ export default function VisualizarCliente({ clienteId, aberto, onOpenChange }: V
                 <Badge variant={cliente.status === "Ativo" ? "success" : "secondary"}>{cliente.status}</Badge>
               </div>
               <p className="text-sm text-muted-foreground">
-                ID: {formatarId(Number(cliente.id))} | Cadastrado em: {formatarData(cliente.data_cadastro!)}
+                ID: {cliente.id} | Cadastrado em: {new Date(cliente.data_cadastro!).toLocaleDateString()}
               </p>
             </div>
 
@@ -123,17 +112,6 @@ export default function VisualizarCliente({ clienteId, aberto, onOpenChange }: V
                   <div>
                     <h4 className="text-sm font-medium">Telefone</h4>
                     <p className="text-sm">{cliente.telefone || "-"}</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-sm font-medium">Telefone Secundário</h4>
-                    <p className="text-sm">{cliente.telefone_secundario || "-"}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium">Website</h4>
-                    <p className="text-sm">{cliente.website || "-"}</p>
                   </div>
                 </div>
 
@@ -162,8 +140,8 @@ export default function VisualizarCliente({ clienteId, aberto, onOpenChange }: V
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-medium">Regime Tributário</h4>
-                  <p className="text-sm">{cliente.regime_tributario || "-"}</p>
+                  <h4 className="text-sm font-medium">Segmento</h4>
+                  <p className="text-sm">{cliente.segmento || "-"}</p>
                 </div>
               </TabsContent>
 
@@ -197,31 +175,16 @@ export default function VisualizarCliente({ clienteId, aberto, onOpenChange }: V
               </TabsContent>
 
               <TabsContent value="comercial" className="space-y-4 mt-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-sm font-medium">Segmento/Ramo de Atividade</h4>
-                    <p className="text-sm">{cliente.segmento || "-"}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium">Condições de Pagamento</h4>
-                    <p className="text-sm">{cliente.condicoes_pagamento || "-"}</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-sm font-medium">Classificação do Cliente</h4>
-                    <p className="text-sm">{cliente.classificacao || "-"}</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium">Origem do Cliente</h4>
-                    <p className="text-sm">{cliente.origem || "-"}</p>
-                  </div>
+                <div>
+                  <h4 className="text-sm font-medium">Status</h4>
+                  <p className="text-sm">{cliente.status || "Ativo"}</p>
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-medium">Observações</h4>
-                  <p className="text-sm whitespace-pre-line">{cliente.observacoes || "-"}</p>
+                  <h4 className="text-sm font-medium">Data de Cadastro</h4>
+                  <p className="text-sm">
+                    {cliente.data_cadastro ? new Date(cliente.data_cadastro).toLocaleDateString() : "-"}
+                  </p>
                 </div>
               </TabsContent>
             </Tabs>
