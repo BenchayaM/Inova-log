@@ -5,27 +5,20 @@ export interface Cliente {
   id?: number
   nome: string
   email: string
-  telefone: string
+  telefone?: string
   endereco?: string
   cidade?: string
   estado?: string
   pais?: string
   cep?: string
   contato?: string
-  status: "Ativo" | "Inativo"
+  status?: "Ativo" | "Inativo"
   data_cadastro?: Date
-  observacoes?: string
-  // Novos campos
-  telefone_secundario?: string
-  website?: string
-  cargo_contato?: string
   cnpj_cpf?: string
   inscricao_estadual?: string
-  regime_tributario?: string
+  cargo_contato?: string
   segmento?: string
-  condicoes_pagamento?: string
-  classificacao?: string
-  origem?: string
+  observacoes?: string
 }
 
 // Listar todos os clientes
@@ -72,35 +65,36 @@ export async function adicionarCliente(cliente: Cliente) {
   try {
     console.log("Adicionando novo cliente:", cliente)
 
-    // Verificar se há campos vazios e removê-los
-    Object.keys(cliente).forEach((key) => {
-      if (cliente[key as keyof Cliente] === "") {
-        console.log(`Removendo campo vazio: ${key}`)
-        delete cliente[key as keyof Cliente]
-      }
-    })
-
-    // Construir a query dinamicamente com base nos campos fornecidos
-    const campos: string[] = []
-    const placeholders: string[] = []
-    const valores: any[] = []
-
-    // Adicionar cada campo não nulo à query
-    Object.entries(cliente).forEach(([key, value]) => {
-      if (key !== "id" && key !== "data_cadastro" && value !== undefined && value !== null) {
-        campos.push(key)
-        placeholders.push("?")
-        valores.push(value)
-      }
-    })
-
-    // Verificar se há campos para inserir
-    if (campos.length === 0) {
-      console.error("Nenhum campo válido para inserção")
-      return { success: false, message: "Nenhum campo válido para inserção" }
+    // Garantir que os campos obrigatórios estejam presentes
+    if (!cliente.nome || !cliente.email) {
+      return { success: false, message: "Nome e email são obrigatórios" }
     }
 
-    const sql = `INSERT INTO clientes (${campos.join(", ")}) VALUES (${placeholders.join(", ")})`
+    // Definir valores padrão para campos não fornecidos
+    const clienteCompleto = {
+      nome: cliente.nome,
+      email: cliente.email,
+      telefone: cliente.telefone || null,
+      endereco: cliente.endereco || null,
+      cidade: cliente.cidade || null,
+      estado: cliente.estado || null,
+      pais: cliente.pais || "Brasil",
+      cep: cliente.cep || null,
+      contato: cliente.contato || null,
+      status: cliente.status || "Ativo",
+      cnpj_cpf: cliente.cnpj_cpf || null,
+      inscricao_estadual: cliente.inscricao_estadual || null,
+      cargo_contato: cliente.cargo_contato || null,
+      segmento: cliente.segmento || null,
+      observacoes: cliente.observacoes || null,
+    }
+
+    // Construir a query dinamicamente
+    const campos = Object.keys(clienteCompleto)
+    const placeholders = campos.map(() => "?").join(", ")
+    const valores = Object.values(clienteCompleto)
+
+    const sql = `INSERT INTO clientes (${campos.join(", ")}) VALUES (${placeholders})`
     console.log("SQL Query:", sql)
     console.log("Valores:", valores)
 
@@ -132,40 +126,29 @@ export async function atualizarCliente(id: number, cliente: Partial<Cliente>) {
   try {
     console.log(`Atualizando cliente com ID ${id}:`, cliente)
 
-    // Verificar se há campos vazios e removê-los
-    Object.keys(cliente).forEach((key) => {
-      if (cliente[key as keyof Partial<Cliente>] === "") {
-        console.log(`Removendo campo vazio: ${key}`)
-        delete cliente[key as keyof Partial<Cliente>]
-      }
-    })
-
-    // Construir a query dinamicamente com base nos campos fornecidos
-    const updateFields: string[] = []
-    const values: any[] = []
-
-    // Adicionar cada campo não nulo à query
-    Object.entries(cliente).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && key !== "id" && key !== "data_cadastro") {
-        updateFields.push(`${key} = ?`)
-        values.push(value)
-      }
-    })
-
     // Verificar se há campos para atualizar
-    if (updateFields.length === 0) {
-      console.error("Nenhum campo válido para atualização")
-      return { success: false, message: "Nenhum campo válido para atualização" }
+    if (Object.keys(cliente).length === 0) {
+      return { success: false, message: "Nenhum campo fornecido para atualização" }
     }
 
+    // Construir a query dinamicamente
+    const updateFields = Object.entries(cliente)
+      .filter(([key]) => key !== "id" && key !== "data_cadastro")
+      .map(([key]) => `${key} = ?`)
+      .join(", ")
+
+    const valores = Object.entries(cliente)
+      .filter(([key]) => key !== "id" && key !== "data_cadastro")
+      .map(([, value]) => (value === "" ? null : value))
+
     // Adicionar o ID ao final dos valores
-    values.push(id)
+    valores.push(id)
 
-    const sql = `UPDATE clientes SET ${updateFields.join(", ")} WHERE id = ?`
+    const sql = `UPDATE clientes SET ${updateFields} WHERE id = ?`
     console.log("SQL Query:", sql)
-    console.log("Valores:", values)
+    console.log("Valores:", valores)
 
-    const result = await query(sql, values)
+    const result = await query(sql, valores)
     console.log("Resultado da query:", result)
 
     if (result.success) {
@@ -221,9 +204,9 @@ export async function buscarClientes(termo: string) {
     const termoPesquisa = `%${termo}%`
     const result = await query(
       `SELECT * FROM clientes 
-       WHERE nome LIKE ? OR email LIKE ? OR telefone LIKE ? OR cidade LIKE ? OR estado LIKE ?
+       WHERE nome LIKE ? OR email LIKE ? OR telefone LIKE ? OR cidade LIKE ? OR estado LIKE ? OR cnpj_cpf LIKE ?
        ORDER BY nome`,
-      [termoPesquisa, termoPesquisa, termoPesquisa, termoPesquisa, termoPesquisa],
+      [termoPesquisa, termoPesquisa, termoPesquisa, termoPesquisa, termoPesquisa, termoPesquisa],
     )
 
     console.log(`Clientes encontrados: ${(result.data as any[]).length}`)
