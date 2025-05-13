@@ -7,12 +7,34 @@ export interface Cliente {
   nome: string;
   email: string;
   telefone: string;
+  telefone_secundario?: string;
+  website?: string;
+  
+  // Informações fiscais
+  cnpj_cpf?: string;
+  inscricao_estadual?: string;
+  regime_tributario?: "Simples Nacional" | "Lucro Presumido" | "Lucro Real" | "MEI" | "Outro";
+  
+  // Endereço
   endereco?: string;
   cidade?: string;
   estado?: string;
   pais?: string;
   cep?: string;
+  
+  // Contato e classificação
   contato?: string;
+  cargo_contato?: string;
+  
+  // Informações comerciais
+  segmento?: string;
+  data_inicio?: Date | string;
+  limite_credito?: number;
+  condicoes_pagamento?: string;
+  
+  // Classificação e status
+  classificacao?: "A" | "B" | "C" | "VIP" | "Regular" | "Ocasional";
+  origem?: string;
   status: "Ativo" | "Inativo";
   data_cadastro?: Date;
   observacoes?: string;
@@ -45,31 +67,37 @@ export async function buscarClientePorId(id: number): Promise<{ success: boolean
   }
 }
 
-// Adicionar novo cliente
-export async function adicionarCliente(cliente: Cliente): Promise<{ success: boolean; message: string; id?: number }> {
+// Adicionar novo cliente - Versão modificada para aceitar campos parciais
+export async function adicionarCliente(cliente: Partial<Cliente>): Promise<{ success: boolean; message: string; id?: number }> {
   try {
-    const result = await executeQuery(
-      `INSERT INTO clientes (
-        nome, email, telefone, endereco, cidade, estado, pais, 
-        cep, contato, status, observacoes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        cliente.nome,
-        cliente.email,
-        cliente.telefone,
-        cliente.endereco || null,
-        cliente.cidade || null,
-        cliente.estado || null,
-        cliente.pais || "Brasil",
-        cliente.cep || null,
-        cliente.contato || null,
-        cliente.status,
-        cliente.observacoes || null,
-      ]
-    );
+    // Garantir que os campos obrigatórios estejam presentes
+    if (!cliente.nome || !cliente.email || !cliente.telefone) {
+      return { 
+        success: false, 
+        message: "Campos obrigatórios não preenchidos (Nome, Email e Telefone são obrigatórios)" 
+      };
+    }
+
+    // Construir a query dinamicamente com base nos campos fornecidos
+    const campos: string[] = [];
+    const placeholders: string[] = [];
+    const valores: any[] = [];
+
+    // Adicionar cada campo não nulo à query
+    Object.entries(cliente).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && key !== 'id' && key !== 'data_cadastro') {
+        campos.push(key);
+        placeholders.push('?');
+        valores.push(value);
+      }
+    });
+
+    // Construir a query SQL
+    const sql = `INSERT INTO clientes (${campos.join(', ')}) VALUES (${placeholders.join(', ')})`;
+
+    const result = await executeQuery(sql, valores);
 
     // Verificar se a inserção foi bem-sucedida
-    // Nota: A estrutura exata do resultado pode variar dependendo da implementação do executeQuery
     const insertId = (result as any).insertId;
     
     return {
