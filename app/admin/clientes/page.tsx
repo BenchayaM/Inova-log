@@ -19,121 +19,19 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Search, Plus, Edit, Trash2, Eye } from "lucide-react"
+import { Search, Plus, Edit, Trash2, Eye, Loader2 } from 'lucide-react'
 import { useToast } from "@/hooks/use-toast"
 import { getLanguage, translations } from "@/lib/i18n"
-
-// Tipos para os clientes
-interface Cliente {
-  id: string
-  nome: string
-  email: string
-  telefone: string
-  endereco: string
-  cidade: string
-  estado: string
-  pais: string
-  cep: string
-  contato: string
-  status: "Ativo" | "Inativo"
-}
-
-// Dados de exemplo
-const clientes: Cliente[] = [
-  {
-    id: "CLI-001",
-    nome: "AMAZON TEMPER MANAUS",
-    email: "contato@amazontemper-manaus.com.br",
-    telefone: "(92) 3456-7890",
-    endereco: "Av. Industrial, 1500",
-    cidade: "Manaus",
-    estado: "AM",
-    pais: "Brasil",
-    cep: "69000-000",
-    contato: "Carlos Silva",
-    status: "Ativo",
-  },
-  {
-    id: "CLI-002",
-    nome: "AMAZON TEMPER FORTALEZA",
-    email: "contato@amazontemper-fortaleza.com.br",
-    telefone: "(85) 3456-7890",
-    endereco: "Av. Santos Dumont, 2500",
-    cidade: "Fortaleza",
-    estado: "CE",
-    pais: "Brasil",
-    cep: "60000-000",
-    contato: "Ana Oliveira",
-    status: "Ativo",
-  },
-  {
-    id: "CLI-003",
-    nome: "VITRAL MANAUS",
-    email: "contato@vitralmanaus.com.br",
-    telefone: "(92) 3456-7891",
-    endereco: "Rua das Indústrias, 500",
-    cidade: "Manaus",
-    estado: "AM",
-    pais: "Brasil",
-    cep: "69000-100",
-    contato: "Roberto Mendes",
-    status: "Ativo",
-  },
-  {
-    id: "CLI-004",
-    nome: "PORTAL VIDROS",
-    email: "contato@portalvidros.com.br",
-    telefone: "(11) 3456-7890",
-    endereco: "Av. Industrial, 800",
-    cidade: "São Paulo",
-    estado: "SP",
-    pais: "Brasil",
-    cep: "04000-000",
-    contato: "Mariana Costa",
-    status: "Ativo",
-  },
-  {
-    id: "CLI-005",
-    nome: "AMAZON TEMPER LUCAS DO RIO VERDE",
-    email: "contato@amazontemper-lrv.com.br",
-    telefone: "(65) 3456-7890",
-    endereco: "Rodovia BR-163, Km 680",
-    cidade: "Lucas do Rio Verde",
-    estado: "MT",
-    pais: "Brasil",
-    cep: "78000-000",
-    contato: "Paulo Rodrigues",
-    status: "Ativo",
-  },
-  {
-    id: "CLI-006",
-    nome: "VIDRORIOS",
-    email: "contato@vidrorios.com.br",
-    telefone: "(21) 3456-7890",
-    endereco: "Av. Brasil, 5000",
-    cidade: "Rio de Janeiro",
-    estado: "RJ",
-    pais: "Brasil",
-    cep: "20000-000",
-    contato: "Fernanda Lima",
-    status: "Inativo",
-  },
-  {
-    id: "CLI-007",
-    nome: "AMAZON TEMPER VARZEA GRANDE",
-    email: "contato@amazontemper-vg.com.br",
-    telefone: "(65) 3456-7891",
-    endereco: "Av. Industrial, 1200",
-    cidade: "Várzea Grande",
-    estado: "MT",
-    pais: "Brasil",
-    cep: "78000-100",
-    contato: "Ricardo Santos",
-    status: "Ativo",
-  },
-]
+// NOVO: Importar o componente de edição
+import EditarCliente from "./editar-cliente"
+// NOVO: Importar o tipo Cliente do arquivo clients.ts
+import type { Cliente } from "@/lib/clients"
 
 export default function ClientesPage() {
+  // NOVO: Estado para armazenar clientes do banco de dados
+  const [clientes, setClientes] = useState<Cliente[]>([])
+  // NOVO: Estado para indicar carregamento
+  const [loading, setLoading] = useState(true)
   const [termoBusca, setTermoBusca] = useState("")
   const [novoCliente, setNovoCliente] = useState<Partial<Cliente>>({
     nome: "",
@@ -150,25 +48,123 @@ export default function ClientesPage() {
   const [dialogAberto, setDialogAberto] = useState(false)
   const [tabAtiva, setTabAtiva] = useState("informacoes")
   const [language, setLanguage] = useState<"pt" | "en">("pt")
+  // NOVO: Estado para indicar salvamento em progresso
+  const [salvando, setSalvando] = useState(false)
+  // NOVO: Estados para controlar a edição de cliente
+  const [clienteEditandoId, setClienteEditandoId] = useState<number | null>(null)
+  const [dialogEdicaoAberto, setDialogEdicaoAberto] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
     setLanguage(getLanguage())
+    // NOVO: Carregar clientes ao montar o componente
+    carregarClientes()
   }, [])
 
   const t = translations[language]
 
-  // Filtrar clientes pelo termo de busca
-  const clientesFiltrados = clientes.filter((cliente) => {
-    const termo = termoBusca.toLowerCase()
-    return (
-      cliente.nome.toLowerCase().includes(termo) ||
-      cliente.email.toLowerCase().includes(termo) ||
-      cliente.id.toLowerCase().includes(termo) ||
-      cliente.cidade.toLowerCase().includes(termo) ||
-      cliente.estado.toLowerCase().includes(termo)
-    )
-  })
+  // NOVO: Função para carregar clientes do banco de dados
+  const carregarClientes = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch("/api/clientes")
+      const data = await response.json()
+
+      if (data.success) {
+        setClientes(data.clientes)
+      } else {
+        toast({
+          title: language === "pt" ? "Erro" : "Error",
+          description: data.message || (language === "pt" ? "Erro ao carregar clientes" : "Error loading clients"),
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Erro ao carregar clientes:", error)
+      toast({
+        title: language === "pt" ? "Erro" : "Error",
+        description: language === "pt" ? "Erro ao conectar ao servidor" : "Error connecting to server",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // NOVO: Buscar clientes pelo termo
+  const buscarClientes = async () => {
+    if (!termoBusca.trim()) {
+      carregarClientes()
+      return
+    }
+
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/clientes?termo=${encodeURIComponent(termoBusca)}`)
+      const data = await response.json()
+
+      if (data.success) {
+        setClientes(data.clientes)
+      } else {
+        toast({
+          title: language === "pt" ? "Erro" : "Error",
+          description: data.message || (language === "pt" ? "Erro ao buscar clientes" : "Error searching clients"),
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Erro ao buscar clientes:", error)
+      toast({
+        title: language === "pt" ? "Erro" : "Error",
+        description: language === "pt" ? "Erro ao conectar ao servidor" : "Error connecting to server",
+        variant: "destructive",
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // NOVO: Excluir cliente
+  const excluirCliente = async (id: number) => {
+    if (
+      !confirm(
+        language === "pt"
+          ? "Tem certeza que deseja excluir este cliente?"
+          : "Are you sure you want to delete this client?"
+      )
+    ) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/clientes/${id}`, {
+        method: "DELETE",
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setClientes(clientes.filter((cliente) => cliente.id !== id))
+        toast({
+          title: language === "pt" ? "Cliente excluído" : "Client deleted",
+          description: language === "pt" ? "Cliente excluído com sucesso" : "Client successfully deleted",
+        })
+      } else {
+        toast({
+          title: language === "pt" ? "Erro" : "Error",
+          description: data.message || (language === "pt" ? "Erro ao excluir cliente" : "Error deleting client"),
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Erro ao excluir cliente:", error)
+      toast({
+        title: language === "pt" ? "Erro" : "Error",
+        description: language === "pt" ? "Erro ao conectar ao servidor" : "Error connecting to server",
+        variant: "destructive",
+      })
+    }
+  }
 
   // Manipular mudanças no formulário
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -176,32 +172,65 @@ export default function ClientesPage() {
     setNovoCliente((prev) => ({ ...prev, [name]: value }))
   }
 
-  // Adicionar novo cliente
-  const adicionarCliente = () => {
-    // Aqui seria implementada a lógica para adicionar o cliente ao backend
-    toast({
-      title: language === "pt" ? "Cliente adicionado" : "Client added",
-      description:
-        language === "pt"
-          ? `${novoCliente.nome} foi adicionado com sucesso.`
-          : `${novoCliente.nome} has been successfully added.`,
-    })
+  // MODIFICADO: Adicionar novo cliente (agora conectado à API)
+  const adicionarCliente = async () => {
+    setSalvando(true)
 
-    // Resetar formulário e fechar diálogo
-    setNovoCliente({
-      nome: "",
-      email: "",
-      telefone: "",
-      endereco: "",
-      cidade: "",
-      estado: "",
-      pais: "Brasil",
-      cep: "",
-      contato: "",
-      status: "Ativo",
-    })
-    setDialogAberto(false)
-    setTabAtiva("informacoes")
+    try {
+      const response = await fetch("/api/clientes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(novoCliente),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast({
+          title: language === "pt" ? "Cliente adicionado" : "Client added",
+          description:
+            language === "pt"
+              ? `${novoCliente.nome} foi adicionado com sucesso.`
+              : `${novoCliente.nome} has been successfully added.`,
+        })
+
+        // Resetar formulário e fechar diálogo
+        setNovoCliente({
+          nome: "",
+          email: "",
+          telefone: "",
+          endereco: "",
+          cidade: "",
+          estado: "",
+          pais: "Brasil",
+          cep: "",
+          contato: "",
+          status: "Ativo",
+        })
+        setDialogAberto(false)
+        setTabAtiva("informacoes")
+
+        // Recarregar a lista de clientes
+        carregarClientes()
+      } else {
+        toast({
+          title: language === "pt" ? "Erro" : "Error",
+          description: data.message || (language === "pt" ? "Erro ao adicionar cliente" : "Error adding client"),
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Erro ao adicionar cliente:", error)
+      toast({
+        title: language === "pt" ? "Erro" : "Error",
+        description: language === "pt" ? "Erro ao conectar ao servidor" : "Error connecting to server",
+        variant: "destructive",
+      })
+    } finally {
+      setSalvando(false)
+    }
   }
 
   return (
@@ -344,7 +373,18 @@ export default function ClientesPage() {
               <Button variant="outline" onClick={() => setDialogAberto(false)}>
                 {t.cancel}
               </Button>
-              <Button onClick={adicionarCliente}>{language === "pt" ? "Adicionar Cliente" : "Add Client"}</Button>
+              <Button onClick={adicionarCliente} disabled={salvando}>
+                {salvando ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {language === "pt" ? "Salvando..." : "Saving..."}
+                  </>
+                ) : language === "pt" ? (
+                  "Adicionar Cliente"
+                ) : (
+                  "Add Client"
+                )}
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -358,8 +398,8 @@ export default function ClientesPage() {
               ? "Gerencie todos os clientes cadastrados no sistema."
               : "Manage all clients registered in the system."}
           </CardDescription>
-          <div className="mt-4">
-            <div className="relative">
+          <div className="mt-4 flex gap-2">
+            <div className="relative flex-grow">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
@@ -367,8 +407,21 @@ export default function ClientesPage() {
                 className="pl-8"
                 value={termoBusca}
                 onChange={(e) => setTermoBusca(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && buscarClientes()}
               />
             </div>
+            <Button onClick={buscarClientes} variant="outline">
+              {language === "pt" ? "Buscar" : "Search"}
+            </Button>
+            <Button
+              onClick={() => {
+                setTermoBusca("")
+                carregarClientes()
+              }}
+              variant="outline"
+            >
+              {language === "pt" ? "Limpar" : "Clear"}
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -387,39 +440,80 @@ export default function ClientesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {clientesFiltrados.map((cliente) => (
-                <TableRow key={cliente.id}>
-                  <TableCell className="font-medium">{cliente.id}</TableCell>
-                  <TableCell>{cliente.nome}</TableCell>
-                  <TableCell className="hidden md:table-cell">{cliente.email}</TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    {cliente.cidade}/{cliente.estado}
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">{cliente.contato}</TableCell>
-                  <TableCell>
-                    <Badge variant={cliente.status === "Ativo" ? "success" : "secondary"}>
-                      {cliente.status === "Ativo" ? t.active : t.inactive}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="icon">
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="icon">
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button variant="outline" size="icon">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-24 text-center">
+                    <div className="flex justify-center items-center">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <span className="ml-2">{language === "pt" ? "Carregando..." : "Loading..."}</span>
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : clientes.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-24 text-center">
+                    {language === "pt" ? "Nenhum cliente encontrado" : "No clients found"}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                clientes.map((cliente) => (
+                  <TableRow key={cliente.id}>
+                    <TableCell className="font-medium">{cliente.id}</TableCell>
+                    <TableCell>{cliente.nome}</TableCell>
+                    <TableCell className="hidden md:table-cell">{cliente.email}</TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      {cliente.cidade}/{cliente.estado}
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">{cliente.contato}</TableCell>
+                    <TableCell>
+                      <Badge variant={cliente.status === "Ativo" ? "success" : "secondary"}>
+                        {cliente.status === "Ativo" ? t.active : t.inactive}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            // Implementar visualização detalhada
+                            // Esta funcionalidade será implementada posteriormente
+                          }}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        {/* MODIFICADO: Botão de edição agora abre o diálogo de edição */}
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            setClienteEditandoId(Number(cliente.id));
+                            setDialogEdicaoAberto(true);
+                          }}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        {/* MODIFICADO: Botão de exclusão agora chama a função excluirCliente */}
+                        <Button variant="outline" size="icon" onClick={() => excluirCliente(Number(cliente.id))}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+
+      {/* NOVO: Componente de edição de cliente */}
+      <EditarCliente
+        clienteId={clienteEditandoId}
+        aberto={dialogEdicaoAberto}
+        onOpenChange={setDialogEdicaoAberto}
+        onClienteAtualizado={carregarClientes}
+      />
     </div>
   )
 }
