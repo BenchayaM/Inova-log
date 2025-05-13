@@ -204,8 +204,8 @@ export async function buscarClientes(termo: string) {
     const termoPesquisa = `%${termo}%`
     const result = await query(
       `SELECT * FROM clientes 
-       WHERE nome LIKE ? OR email LIKE ? OR telefone LIKE ? OR cidade LIKE ? OR estado LIKE ? OR cnpj_cpf LIKE ?
-       ORDER BY nome`,
+     WHERE nome LIKE ? OR email LIKE ? OR telefone LIKE ? OR cidade LIKE ? OR estado LIKE ? OR cnpj_cpf LIKE ?
+     ORDER BY nome`,
       [termoPesquisa, termoPesquisa, termoPesquisa, termoPesquisa, termoPesquisa, termoPesquisa],
     )
 
