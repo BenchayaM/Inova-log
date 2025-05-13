@@ -1,36 +1,4 @@
-export const getLanguage = () => {
-  if (typeof window === "undefined") {
-    return "pt" // Default to Portuguese on the server-side
-  }
-
-  // Try to get language from various sources
-  try {
-    // Check for a language preference stored by the login page
-    const storedLanguage =
-      localStorage.getItem("selectedLanguage") ||
-      sessionStorage.getItem("selectedLanguage") ||
-      document.documentElement.getAttribute("data-language") ||
-      document.documentElement.lang
-
-    if (storedLanguage === "en" || storedLanguage === "pt") {
-      return storedLanguage
-    }
-  } catch (e) {
-    console.log("Error accessing storage:", e)
-    // Continue to fallback
-  }
-
-  // Fall back to browser language if available
-  try {
-    const language = navigator.language || (navigator.languages && navigator.languages[0]) || "pt"
-    return language.startsWith("en") ? "en" : "pt"
-  } catch (e) {
-    console.log("Error accessing navigator language:", e)
-    // Final fallback
-    return "pt"
-  }
-}
-
+// Definições de traduções
 export const translations = {
   pt: {
     clientManagement: "Gerenciamento de Clientes",
@@ -86,18 +54,7 @@ export const translations = {
   },
 }
 
-// Simplified language change detection
-export const setupLanguageListener = (callback: (lang: string) => void) => {
-  if (typeof window === "undefined") return () => {}
+// Tipo para as chaves de idioma suportadas
+export type SupportedLanguage = "pt" | "en"
 
-  // Check for language changes periodically
-  const interval = setInterval(() => {
-    const newLang = getLanguage()
-    callback(newLang)
-  }, 2000)
-
-  // Return cleanup function
-  return () => {
-    clearInterval(interval)
-  }
-}
+// Hook para usar o idioma (implementado no componente)
