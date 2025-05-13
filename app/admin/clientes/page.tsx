@@ -21,16 +21,13 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Search, Plus, Edit, Trash2, Eye, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
-import { getLanguage, translations } from "@/lib/i18n"
 import type { Cliente } from "@/lib/clients"
-import EditarCliente from "./editar-cliente"
-import VisualizarCliente from "./visualizar-cliente"
 
 export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [termoBusca, setTermoBusca] = useState("")
-  const [novoCliente, setNovoCliente] = useState<Partial<Cliente>>({
+  const [novoCliente, setNovoCliente] = useState<Cliente>({
     nome: "",
     email: "",
     telefone: "",
@@ -41,22 +38,14 @@ export default function ClientesPage() {
     cep: "",
     contato: "",
     status: "Ativo",
-    // Novos campos
-    telefone_secundario: "",
-    website: "",
-    cargo_contato: "",
     cnpj_cpf: "",
     inscricao_estadual: "",
-    regime_tributario: "",
+    cargo_contato: "",
     segmento: "",
-    condicoes_pagamento: "",
-    classificacao: "",
-    origem: "",
     observacoes: "",
   })
   const [dialogAberto, setDialogAberto] = useState(false)
   const [tabAtiva, setTabAtiva] = useState("informacoes")
-  const [language, setLanguage] = useState<"pt" | "en">("pt")
   const [salvando, setSalvando] = useState(false)
   const [clienteSelecionado, setClienteSelecionado] = useState<number | null>(null)
   const [editarDialogAberto, setEditarDialogAberto] = useState(false)
@@ -64,11 +53,8 @@ export default function ClientesPage() {
   const { toast } = useToast()
 
   useEffect(() => {
-    setLanguage(getLanguage())
     carregarClientes()
   }, [])
-
-  const t = translations[language]
 
   // Carregar clientes do banco de dados
   const carregarClientes = async () => {
@@ -109,16 +95,16 @@ export default function ClientesPage() {
         setClientes(data.clientes)
       } else {
         toast({
-          title: language === "pt" ? "Erro" : "Error",
-          description: data.message || (language === "pt" ? "Erro ao carregar clientes" : "Error loading clients"),
+          title: "Erro",
+          description: data.message || "Erro ao carregar clientes",
           variant: "destructive",
         })
       }
     } catch (error) {
       console.error("Erro ao carregar clientes:", error)
       toast({
-        title: language === "pt" ? "Erro" : "Error",
-        description: language === "pt" ? "Erro ao conectar ao servidor" : "Error connecting to server",
+        title: "Erro",
+        description: "Erro ao conectar ao servidor",
         variant: "destructive",
       })
     } finally {
@@ -138,7 +124,6 @@ export default function ClientesPage() {
       const response = await fetch(`/api/clientes?termo=${encodeURIComponent(termoBusca)}`, {
         headers: {
           "Content-Type": "application/json",
-          // Adicionar cabeçalhos para evitar cache
           "Cache-Control": "no-cache, no-store, must-revalidate",
           Pragma: "no-cache",
           Expires: "0",
@@ -155,16 +140,16 @@ export default function ClientesPage() {
         setClientes(data.clientes)
       } else {
         toast({
-          title: language === "pt" ? "Erro" : "Error",
-          description: data.message || (language === "pt" ? "Erro ao buscar clientes" : "Error searching clients"),
+          title: "Erro",
+          description: data.message || "Erro ao buscar clientes",
           variant: "destructive",
         })
       }
     } catch (error) {
       console.error("Erro ao buscar clientes:", error)
       toast({
-        title: language === "pt" ? "Erro" : "Error",
-        description: language === "pt" ? "Erro ao conectar ao servidor" : "Error connecting to server",
+        title: "Erro",
+        description: "Erro ao conectar ao servidor",
         variant: "destructive",
       })
     } finally {
@@ -174,13 +159,7 @@ export default function ClientesPage() {
 
   // Excluir cliente
   const excluirCliente = async (id: number) => {
-    if (
-      !confirm(
-        language === "pt"
-          ? "Tem certeza que deseja excluir este cliente?"
-          : "Are you sure you want to delete this client?",
-      )
-    ) {
+    if (!confirm("Tem certeza que deseja excluir este cliente?")) {
       return
     }
 
@@ -201,21 +180,21 @@ export default function ClientesPage() {
       if (data.success) {
         setClientes(clientes.filter((cliente) => cliente.id !== id))
         toast({
-          title: language === "pt" ? "Cliente excluído" : "Client deleted",
-          description: language === "pt" ? "Cliente excluído com sucesso" : "Client successfully deleted",
+          title: "Cliente excluído",
+          description: "Cliente excluído com sucesso",
         })
       } else {
         toast({
-          title: language === "pt" ? "Erro" : "Error",
-          description: data.message || (language === "pt" ? "Erro ao excluir cliente" : "Error deleting client"),
+          title: "Erro",
+          description: data.message || "Erro ao excluir cliente",
           variant: "destructive",
         })
       }
     } catch (error) {
       console.error("Erro ao excluir cliente:", error)
       toast({
-        title: language === "pt" ? "Erro" : "Error",
-        description: language === "pt" ? "Erro ao conectar ao servidor" : "Error connecting to server",
+        title: "Erro",
+        description: "Erro ao conectar ao servidor",
         variant: "destructive",
       })
     }
@@ -230,28 +209,23 @@ export default function ClientesPage() {
   // Adicionar novo cliente
   const adicionarCliente = async () => {
     // Validar campos obrigatórios
-    if (!novoCliente.nome || !novoCliente.email || !novoCliente.telefone) {
+    if (!novoCliente.nome || !novoCliente.email) {
       toast({
-        title: language === "pt" ? "Erro" : "Error",
-        description:
-          language === "pt"
-            ? "Preencha os campos obrigatórios (Nome, Email e Telefone)"
-            : "Fill in the required fields (Name, Email and Phone)",
+        title: "Erro",
+        description: "Preencha os campos obrigatórios (Nome e Email)",
         variant: "destructive",
       })
       return
     }
 
     setSalvando(true)
-    console.log("Enviando dados:", novoCliente) // Log para depuração
+    console.log("Enviando dados:", novoCliente)
 
     try {
       // Criar um objeto com apenas os campos obrigatórios
       const clienteMinimo = {
         nome: novoCliente.nome,
         email: novoCliente.email,
-        telefone: novoCliente.telefone,
-        status: novoCliente.status || "Ativo",
       }
 
       console.log("Enviando cliente mínimo:", clienteMinimo)
@@ -264,7 +238,7 @@ export default function ClientesPage() {
         body: JSON.stringify(clienteMinimo),
       })
 
-      console.log("Status da resposta:", response.status) // Log para depuração
+      console.log("Status da resposta:", response.status)
 
       if (!response.ok) {
         throw new Error(`Erro HTTP: ${response.status}`)
@@ -284,11 +258,8 @@ export default function ClientesPage() {
 
       if (data.success) {
         toast({
-          title: language === "pt" ? "Cliente adicionado" : "Client added",
-          description:
-            language === "pt"
-              ? `${novoCliente.nome} foi adicionado com sucesso.`
-              : `${novoCliente.nome} has been successfully added.`,
+          title: "Cliente adicionado",
+          description: `${novoCliente.nome} foi adicionado com sucesso.`,
         })
 
         // Resetar formulário e fechar diálogo
@@ -303,16 +274,10 @@ export default function ClientesPage() {
           cep: "",
           contato: "",
           status: "Ativo",
-          telefone_secundario: "",
-          website: "",
-          cargo_contato: "",
           cnpj_cpf: "",
           inscricao_estadual: "",
-          regime_tributario: "",
+          cargo_contato: "",
           segmento: "",
-          condicoes_pagamento: "",
-          classificacao: "",
-          origem: "",
           observacoes: "",
         })
         setDialogAberto(false)
@@ -322,16 +287,16 @@ export default function ClientesPage() {
         carregarClientes()
       } else {
         toast({
-          title: language === "pt" ? "Erro" : "Error",
-          description: data.message || (language === "pt" ? "Erro ao adicionar cliente" : "Error adding client"),
+          title: "Erro",
+          description: data.message || "Erro ao adicionar cliente",
           variant: "destructive",
         })
       }
     } catch (error) {
       console.error("Erro ao adicionar cliente:", error)
       toast({
-        title: language === "pt" ? "Erro" : "Error",
-        description: language === "pt" ? "Erro ao conectar ao servidor" : "Error connecting to server",
+        title: "Erro",
+        description: "Erro ao conectar ao servidor",
         variant: "destructive",
       })
     } finally {
@@ -339,133 +304,95 @@ export default function ClientesPage() {
     }
   }
 
-  // Formatar ID para exibição
-  const formatarId = (id: number) => {
-    return `CLI-${id.toString().padStart(3, "0")}`
-  }
-
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">{t.clientManagement}</h1>
+        <h1 className="text-2xl font-bold">Gerenciamento de Clientes</h1>
 
         <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              {t.newClient}
+              Novo Cliente
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
-              <DialogTitle>{t.addClient}</DialogTitle>
+              <DialogTitle>Adicionar Cliente</DialogTitle>
               <DialogDescription>
-                {t.clientData} <span className="text-red-500">*</span> Campos obrigatórios
+                Preencha os dados do cliente abaixo. <span className="text-red-500">*</span> Campos obrigatórios
               </DialogDescription>
             </DialogHeader>
 
             <Tabs value={tabAtiva} onValueChange={setTabAtiva} className="w-full mt-4">
-              <TabsList className="grid grid-cols-4">
-                <TabsTrigger value="informacoes">{t.generalInfo}</TabsTrigger>
+              <TabsList className="grid grid-cols-3">
+                <TabsTrigger value="informacoes">Informações Gerais</TabsTrigger>
+                <TabsTrigger value="endereco">Endereço</TabsTrigger>
                 <TabsTrigger value="fiscal">Informações Fiscais</TabsTrigger>
-                <TabsTrigger value="endereco">{t.addressInfo}</TabsTrigger>
-                <TabsTrigger value="comercial">Informações Comerciais</TabsTrigger>
               </TabsList>
 
               <TabsContent value="informacoes" className="space-y-4 mt-4">
                 <div className="grid gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="nome" className="flex items-center">
-                      {t.companyName} <span className="text-red-500 ml-1">*</span>
+                      Nome da Empresa <span className="text-red-500 ml-1">*</span>
                     </Label>
                     <Input
                       id="nome"
                       name="nome"
                       value={novoCliente.nome}
                       onChange={handleChange}
-                      placeholder={language === "pt" ? "Nome da empresa" : "Company name"}
+                      placeholder="Nome da empresa"
                       required
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="email" className="flex items-center">
-                        Email <span className="text-red-500 ml-1">*</span>
-                      </Label>
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        value={novoCliente.email}
-                        onChange={handleChange}
-                        placeholder={language === "pt" ? "contato@empresa.com" : "contact@company.com"}
-                        required
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="telefone" className="flex items-center">
-                        {language === "pt" ? "Telefone" : "Phone"} <span className="text-red-500 ml-1">*</span>
-                      </Label>
-                      <Input
-                        id="telefone"
-                        name="telefone"
-                        value={novoCliente.telefone}
-                        onChange={handleChange}
-                        placeholder="(00) 0000-0000"
-                        required
-                      />
-                    </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="email" className="flex items-center">
+                      Email <span className="text-red-500 ml-1">*</span>
+                    </Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={novoCliente.email}
+                      onChange={handleChange}
+                      placeholder="contato@empresa.com"
+                      required
+                    />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="telefone_secundario">
-                        {language === "pt" ? "Telefone Secundário" : "Secondary Phone"}
-                      </Label>
-                      <Input
-                        id="telefone_secundario"
-                        name="telefone_secundario"
-                        value={novoCliente.telefone_secundario}
-                        onChange={handleChange}
-                        placeholder="(00) 0000-0000"
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="website">Website</Label>
-                      <Input
-                        id="website"
-                        name="website"
-                        value={novoCliente.website}
-                        onChange={handleChange}
-                        placeholder="www.empresa.com.br"
-                      />
-                    </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="telefone">Telefone</Label>
+                    <Input
+                      id="telefone"
+                      name="telefone"
+                      value={novoCliente.telefone}
+                      onChange={handleChange}
+                      placeholder="(00) 0000-0000"
+                    />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="contato">{t.contactPerson}</Label>
-                      <Input
-                        id="contato"
-                        name="contato"
-                        value={novoCliente.contato}
-                        onChange={handleChange}
-                        placeholder={language === "pt" ? "Nome do contato principal" : "Main contact name"}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="cargo_contato">
-                        {language === "pt" ? "Cargo do Contato" : "Contact Position"}
-                      </Label>
-                      <Input
-                        id="cargo_contato"
-                        name="cargo_contato"
-                        value={novoCliente.cargo_contato}
-                        onChange={handleChange}
-                        placeholder={language === "pt" ? "Diretor, Gerente, etc." : "Director, Manager, etc."}
-                      />
-                    </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="contato">Pessoa de Contato</Label>
+                    <Input
+                      id="contato"
+                      name="contato"
+                      value={novoCliente.contato}
+                      onChange={handleChange}
+                      placeholder="Nome do contato principal"
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="cargo_contato">Cargo do Contato</Label>
+                    <Input
+                      id="cargo_contato"
+                      name="cargo_contato"
+                      value={novoCliente.cargo_contato}
+                      onChange={handleChange}
+                      placeholder="Diretor, Gerente, etc."
+                    />
                   </div>
 
                   <div className="grid gap-2">
@@ -477,30 +404,130 @@ export default function ClientesPage() {
                       onChange={handleChange}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      <option value="Ativo">{t.active}</option>
-                      <option value="Inativo">{t.inactive}</option>
+                      <option value="Ativo">Ativo</option>
+                      <option value="Inativo">Inativo</option>
                     </select>
                   </div>
                 </div>
               </TabsContent>
 
-              {/* Outras abas omitidas para brevidade */}
+              <TabsContent value="endereco" className="space-y-4 mt-4">
+                <div className="grid gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="endereco">Endereço</Label>
+                    <Input
+                      id="endereco"
+                      name="endereco"
+                      value={novoCliente.endereco}
+                      onChange={handleChange}
+                      placeholder="Rua, número, complemento"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="cidade">Cidade</Label>
+                      <Input
+                        id="cidade"
+                        name="cidade"
+                        value={novoCliente.cidade}
+                        onChange={handleChange}
+                        placeholder="Cidade"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="estado">Estado</Label>
+                      <Input
+                        id="estado"
+                        name="estado"
+                        value={novoCliente.estado}
+                        onChange={handleChange}
+                        placeholder="Estado"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="pais">País</Label>
+                      <Input
+                        id="pais"
+                        name="pais"
+                        value={novoCliente.pais}
+                        onChange={handleChange}
+                        placeholder="País"
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="cep">CEP</Label>
+                      <Input id="cep" name="cep" value={novoCliente.cep} onChange={handleChange} placeholder="CEP" />
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="fiscal" className="space-y-4 mt-4">
+                <div className="grid gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="cnpj_cpf">CNPJ/CPF</Label>
+                    <Input
+                      id="cnpj_cpf"
+                      name="cnpj_cpf"
+                      value={novoCliente.cnpj_cpf}
+                      onChange={handleChange}
+                      placeholder="00.000.000/0000-00"
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="inscricao_estadual">Inscrição Estadual</Label>
+                    <Input
+                      id="inscricao_estadual"
+                      name="inscricao_estadual"
+                      value={novoCliente.inscricao_estadual}
+                      onChange={handleChange}
+                      placeholder="Inscrição Estadual"
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="segmento">Segmento/Ramo de Atividade</Label>
+                    <Input
+                      id="segmento"
+                      name="segmento"
+                      value={novoCliente.segmento}
+                      onChange={handleChange}
+                      placeholder="Ex: Construção Civil, Varejo, etc."
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="observacoes">Observações</Label>
+                    <textarea
+                      id="observacoes"
+                      name="observacoes"
+                      value={novoCliente.observacoes}
+                      onChange={handleChange}
+                      placeholder="Observações adicionais sobre o cliente"
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                  </div>
+                </div>
+              </TabsContent>
             </Tabs>
 
             <DialogFooter className="mt-6">
               <Button variant="outline" onClick={() => setDialogAberto(false)}>
-                {t.cancel}
+                Cancelar
               </Button>
               <Button onClick={adicionarCliente} disabled={salvando}>
                 {salvando ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {language === "pt" ? "Salvando..." : "Saving..."}
+                    Salvando...
                   </>
-                ) : language === "pt" ? (
-                  "Adicionar Cliente"
                 ) : (
-                  "Add Client"
+                  "Adicionar Cliente"
                 )}
               </Button>
             </DialogFooter>
@@ -510,18 +537,14 @@ export default function ClientesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>{language === "pt" ? "Clientes" : "Clients"}</CardTitle>
-          <CardDescription>
-            {language === "pt"
-              ? "Gerencie todos os clientes cadastrados no sistema."
-              : "Manage all clients registered in the system."}
-          </CardDescription>
+          <CardTitle>Clientes</CardTitle>
+          <CardDescription>Gerencie todos os clientes cadastrados no sistema.</CardDescription>
           <div className="mt-4 flex gap-2">
             <div className="relative flex-grow">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder={language === "pt" ? "Buscar clientes..." : "Search clients..."}
+                placeholder="Buscar clientes..."
                 className="pl-8"
                 value={termoBusca}
                 onChange={(e) => setTermoBusca(e.target.value)}
@@ -529,7 +552,7 @@ export default function ClientesPage() {
               />
             </div>
             <Button onClick={buscarClientes} variant="outline">
-              {language === "pt" ? "Buscar" : "Search"}
+              Buscar
             </Button>
             <Button
               onClick={() => {
@@ -538,7 +561,7 @@ export default function ClientesPage() {
               }}
               variant="outline"
             >
-              {language === "pt" ? "Limpar" : "Clear"}
+              Limpar
             </Button>
           </div>
         </CardHeader>
@@ -547,14 +570,12 @@ export default function ClientesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>ID</TableHead>
-                <TableHead>{language === "pt" ? "Nome" : "Name"}</TableHead>
-                <TableHead className="hidden md:table-cell">Email</TableHead>
-                <TableHead className="hidden lg:table-cell">
-                  {language === "pt" ? "Cidade/Estado" : "City/State"}
-                </TableHead>
-                <TableHead className="hidden lg:table-cell">{language === "pt" ? "Contato" : "Contact"}</TableHead>
+                <TableHead>Nome</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead className="hidden md:table-cell">Telefone</TableHead>
+                <TableHead className="hidden lg:table-cell">Cidade/Estado</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>{t.actions}</TableHead>
+                <TableHead>Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -563,29 +584,29 @@ export default function ClientesPage() {
                   <TableCell colSpan={7} className="h-24 text-center">
                     <div className="flex justify-center items-center">
                       <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                      <span className="ml-2">{language === "pt" ? "Carregando..." : "Loading..."}</span>
+                      <span className="ml-2">Carregando...</span>
                     </div>
                   </TableCell>
                 </TableRow>
               ) : clientes.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="h-24 text-center">
-                    {language === "pt" ? "Nenhum cliente encontrado" : "No clients found"}
+                    Nenhum cliente encontrado
                   </TableCell>
                 </TableRow>
               ) : (
                 clientes.map((cliente) => (
                   <TableRow key={cliente.id}>
-                    <TableCell className="font-medium">{formatarId(cliente.id!)}</TableCell>
+                    <TableCell className="font-medium">{cliente.id}</TableCell>
                     <TableCell>{cliente.nome}</TableCell>
-                    <TableCell className="hidden md:table-cell">{cliente.email}</TableCell>
+                    <TableCell>{cliente.email}</TableCell>
+                    <TableCell className="hidden md:table-cell">{cliente.telefone || "-"}</TableCell>
                     <TableCell className="hidden lg:table-cell">
-                      {cliente.cidade}/{cliente.estado}
+                      {cliente.cidade && cliente.estado ? `${cliente.cidade}/${cliente.estado}` : "-"}
                     </TableCell>
-                    <TableCell className="hidden lg:table-cell">{cliente.contato}</TableCell>
                     <TableCell>
                       <Badge variant={cliente.status === "Ativo" ? "success" : "secondary"}>
-                        {cliente.status === "Ativo" ? t.active : t.inactive}
+                        {cliente.status || "Ativo"}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -623,20 +644,7 @@ export default function ClientesPage() {
         </CardContent>
       </Card>
 
-      {/* Componente de edição de cliente */}
-      <EditarCliente
-        clienteId={clienteSelecionado}
-        aberto={editarDialogAberto}
-        onOpenChange={setEditarDialogAberto}
-        onClienteAtualizado={carregarClientes}
-      />
-
-      {/* Componente de visualização de cliente */}
-      <VisualizarCliente
-        clienteId={clienteSelecionado}
-        aberto={visualizarDialogAberto}
-        onOpenChange={setVisualizarDialogAberto}
-      />
+      {/* Componentes de edição e visualização seriam adicionados aqui */}
     </div>
   )
 }
