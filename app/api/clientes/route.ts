@@ -24,8 +24,11 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    console.log("GET /api/clientes - Iniciando processamento")
+
     const searchParams = request.nextUrl.searchParams
     const termo = searchParams.get("termo")
+    console.log("Termo de busca:", termo || "nenhum")
 
     let result
     if (termo) {
@@ -34,9 +37,13 @@ export async function GET(request: NextRequest) {
       result = await listarClientes()
     }
 
+    console.log("Resultado da consulta:", result)
+
     if (result.success) {
+      console.log(`Retornando ${(result.data as any[]).length} clientes`)
       return NextResponse.json({ success: true, clientes: result.data }, { headers })
     } else {
+      console.error("Erro na consulta:", result.message)
       return NextResponse.json({ success: false, message: result.message }, { status: 400, headers })
     }
   } catch (error) {
@@ -62,6 +69,8 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    console.log("POST /api/clientes - Iniciando processamento")
+
     // Log da requisição completa
     console.log("Requisição POST recebida:", {
       url: request.url,
@@ -69,34 +78,39 @@ export async function POST(request: NextRequest) {
       headers: Object.fromEntries(request.headers.entries()),
     })
 
-    let body
+    // Tentar obter o corpo da requisição como texto
+    let text = ""
     try {
-      const text = await request.text()
+      text = await request.text()
       console.log("Corpo da requisição (texto):", text)
-
-      if (!text) {
-        return NextResponse.json({ success: false, message: "Corpo da requisição vazio" }, { status: 400, headers })
-      }
-
-      try {
-        body = JSON.parse(text)
-        console.log("Corpo da requisição (JSON):", body)
-      } catch (parseError) {
-        console.error("Erro ao fazer parse do JSON:", parseError)
-        return NextResponse.json(
-          { success: false, message: "Formato JSON inválido", error: String(parseError) },
-          { status: 400, headers },
-        )
-      }
-    } catch (bodyError) {
-      console.error("Erro ao ler o corpo da requisição:", bodyError)
+    } catch (textError) {
+      console.error("Erro ao ler o corpo da requisição como texto:", textError)
       return NextResponse.json(
-        { success: false, message: "Erro ao ler o corpo da requisição", error: String(bodyError) },
+        { success: false, message: "Erro ao ler o corpo da requisição" },
         { status: 400, headers },
       )
     }
 
-    // Validar apenas campos obrigatórios
+    // Verificar se o corpo está vazio
+    if (!text || text.trim() === "") {
+      console.error("Corpo da requisição vazio")
+      return NextResponse.json({ success: false, message: "Corpo da requisição vazio" }, { status: 400, headers })
+    }
+
+    // Tentar fazer parse do JSON
+    let body
+    try {
+      body = JSON.parse(text)
+      console.log("Corpo da requisição (JSON):", body)
+    } catch (parseError) {
+      console.error("Erro ao fazer parse do JSON:", parseError)
+      return NextResponse.json(
+        { success: false, message: "Formato JSON inválido", error: String(parseError) },
+        { status: 400, headers },
+      )
+    }
+
+    // Validar campos obrigatórios
     if (!body.nome || !body.email) {
       console.log("Campos obrigatórios não preenchidos:", {
         nome: body.nome,
@@ -131,6 +145,8 @@ export async function POST(request: NextRequest) {
     if (body.observacoes) cliente.observacoes = body.observacoes
 
     console.log("Cliente a ser adicionado:", cliente)
+
+    // Chamar a função para adicionar o cliente
     const result = await adicionarCliente(cliente)
     console.log("Resultado da operação:", result)
 
