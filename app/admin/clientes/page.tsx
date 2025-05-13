@@ -22,6 +22,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Search, Plus, Edit, Trash2, Eye, Loader2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import type { Cliente } from "@/lib/clients"
+import VisualizarCliente from "./visualizar-cliente"
+import EditarCliente from "./editar-cliente"
 
 export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -621,6 +623,20 @@ export default function ClientesPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Componentes de diálogo para visualizar e editar clientes */}
+      <VisualizarCliente
+        clienteId={clienteSelecionado}
+        aberto={visualizarDialogAberto}
+        onOpenChange={setVisualizarDialogAberto}
+      />
+
+      <EditarCliente
+        clienteId={clienteSelecionado}
+        aberto={editarDialogAberto}
+        onOpenChange={setEditarDialogAberto}
+        onClienteAtualizado={carregarClientes}
+      />
     </div>
   )
 }
