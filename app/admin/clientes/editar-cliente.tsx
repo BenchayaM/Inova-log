@@ -1,6 +1,8 @@
-"use client";
+"use client"
 
-import { useState, useEffect } from "react";
+import type React from "react"
+
+import { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -8,92 +10,87 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Loader2 } from 'lucide-react';
-import { useToast } from "@/hooks/use-toast";
-import type { Cliente } from "@/lib/clients";
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Loader2 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import type { Cliente } from "@/lib/clients"
 
 interface EditarClienteProps {
-  clienteId: number | null;
-  aberto: boolean;
-  onOpenChange: (aberto: boolean) => void;
-  onClienteAtualizado: () => void;
+  clienteId: number | null
+  aberto: boolean
+  onOpenChange: (aberto: boolean) => void
+  onClienteAtualizado: () => void
 }
 
-export default function EditarCliente({
-  clienteId,
-  aberto,
-  onOpenChange,
-  onClienteAtualizado,
-}: EditarClienteProps) {
-  const [cliente, setCliente] = useState<Partial<Cliente>>({});
-  const [carregando, setCarregando] = useState(false);
-  const [salvando, setSalvando] = useState(false);
-  const [tabAtiva, setTabAtiva] = useState("informacoes");
-  const { toast } = useToast();
+export default function EditarCliente({ clienteId, aberto, onOpenChange, onClienteAtualizado }: EditarClienteProps) {
+  const [cliente, setCliente] = useState<Partial<Cliente>>({})
+  const [carregando, setCarregando] = useState(false)
+  const [salvando, setSalvando] = useState(false)
+  const [tabAtiva, setTabAtiva] = useState("informacoes")
+  const { toast } = useToast()
 
   // Carregar dados do cliente quando o ID mudar
   useEffect(() => {
     if (clienteId && aberto) {
-      carregarCliente(clienteId);
+      carregarCliente(clienteId)
     }
-  }, [clienteId, aberto]);
+  }, [clienteId, aberto])
 
   // Carregar dados do cliente
   const carregarCliente = async (id: number) => {
-    setCarregando(true);
+    setCarregando(true)
     try {
-      const response = await fetch(`/api/clientes/${id}`);
-      const data = await response.json();
+      const response = await fetch(`/api/clientes/${id}`)
+      const data = await response.json()
 
       if (data.success) {
-        setCliente(data.cliente);
+        setCliente(data.cliente)
       } else {
         toast({
           title: "Erro",
           description: data.message || "Erro ao carregar dados do cliente",
           variant: "destructive",
-        });
-        onOpenChange(false);
+        })
+        onOpenChange(false)
       }
     } catch (error) {
-      console.error("Erro ao carregar cliente:", error);
+      console.error("Erro ao carregar cliente:", error)
       toast({
         title: "Erro",
         description: "Erro ao conectar ao servidor",
         variant: "destructive",
-      });
-      onOpenChange(false);
+      })
+      onOpenChange(false)
     } finally {
-      setCarregando(false);
+      setCarregando(false)
     }
-  };
+  }
 
   // Manipular mudanças no formulário
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setCliente((prev) => ({ ...prev, [name]: value }));
-  };
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setCliente((prev) => ({ ...prev, [name]: value }))
+  }
 
   // Atualizar cliente
   const atualizarCliente = async () => {
-    if (!clienteId) return;
-    
+    if (!clienteId) return
+
     // Validar campos obrigatórios
     if (!cliente.nome || !cliente.email || !cliente.telefone) {
       toast({
         title: "Erro",
         description: "Preencha os campos obrigatórios (Nome, Email e Telefone)",
         variant: "destructive",
-      });
-      return;
+      })
+      return
     }
-    
-    setSalvando(true);
+
+    setSalvando(true)
     try {
       const response = await fetch(`/api/clientes/${clienteId}`, {
         method: "PUT",
@@ -101,35 +98,35 @@ export default function EditarCliente({
           "Content-Type": "application/json",
         },
         body: JSON.stringify(cliente),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (data.success) {
         toast({
           title: "Cliente atualizado",
           description: "Os dados do cliente foram atualizados com sucesso",
-        });
-        onClienteAtualizado();
-        onOpenChange(false);
+        })
+        onClienteAtualizado()
+        onOpenChange(false)
       } else {
         toast({
           title: "Erro",
           description: data.message || "Erro ao atualizar cliente",
           variant: "destructive",
-        });
+        })
       }
     } catch (error) {
-      console.error("Erro ao atualizar cliente:", error);
+      console.error("Erro ao atualizar cliente:", error)
       toast({
         title: "Erro",
         description: "Erro ao conectar ao servidor",
         variant: "destructive",
-      });
+      })
     } finally {
-      setSalvando(false);
+      setSalvando(false)
     }
-  };
+  }
 
   return (
     <Dialog open={aberto} onOpenChange={onOpenChange}>
@@ -254,7 +251,7 @@ export default function EditarCliente({
                       id="status"
                       name="status"
                       value={cliente.status || "Ativo"}
-                      onChange={(e) => setCliente({ ...cliente, status: e.target.value as "Ativo" | "Inativo" })}
+                      onChange={handleChange}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <option value="Ativo">Ativo</option>
@@ -295,7 +292,7 @@ export default function EditarCliente({
                       id="regime_tributario"
                       name="regime_tributario"
                       value={cliente.regime_tributario || ""}
-                      onChange={(e) => setCliente({ ...cliente, regime_tributario: e.target.value as any })}
+                      onChange={handleChange}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <option value="">Selecione...</option>
@@ -358,13 +355,7 @@ export default function EditarCliente({
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="cep">CEP</Label>
-                      <Input
-                        id="cep"
-                        name="cep"
-                        value={cliente.cep || ""}
-                        onChange={handleChange}
-                        placeholder="CEP"
-                      />
+                      <Input id="cep" name="cep" value={cliente.cep || ""} onChange={handleChange} placeholder="CEP" />
                     </div>
                   </div>
                 </div>
@@ -402,7 +393,7 @@ export default function EditarCliente({
                         id="classificacao"
                         name="classificacao"
                         value={cliente.classificacao || ""}
-                        onChange={(e) => setCliente({ ...cliente, classificacao: e.target.value as any })}
+                        onChange={handleChange}
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <option value="">Selecione...</option>
@@ -460,5 +451,5 @@ export default function EditarCliente({
         )}
       </DialogContent>
     </Dialog>
-  );
+  )
 }
