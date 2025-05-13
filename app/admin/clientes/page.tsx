@@ -22,15 +22,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Search, Plus, Edit, Trash2, Eye, Loader2 } from 'lucide-react'
 import { useToast } from "@/hooks/use-toast"
 import { getLanguage, translations } from "@/lib/i18n"
-// NOVO: Importar o componente de edição
+// Importar os componentes de edição e visualização
 import EditarCliente from "./editar-cliente"
-// NOVO: Importar o tipo Cliente do arquivo clients.ts
+import VisualizarCliente from "./visualizar-cliente"
+// Importar o tipo Cliente do arquivo clients.ts
 import type { Cliente } from "@/lib/clients"
 
 export default function ClientesPage() {
-  // NOVO: Estado para armazenar clientes do banco de dados
+  // Estado para armazenar clientes do banco de dados
   const [clientes, setClientes] = useState<Cliente[]>([])
-  // NOVO: Estado para indicar carregamento
+  // Estado para indicar carregamento
   const [loading, setLoading] = useState(true)
   const [termoBusca, setTermoBusca] = useState("")
   const [novoCliente, setNovoCliente] = useState<Partial<Cliente>>({
@@ -48,22 +49,25 @@ export default function ClientesPage() {
   const [dialogAberto, setDialogAberto] = useState(false)
   const [tabAtiva, setTabAtiva] = useState("informacoes")
   const [language, setLanguage] = useState<"pt" | "en">("pt")
-  // NOVO: Estado para indicar salvamento em progresso
+  // Estado para indicar salvamento em progresso
   const [salvando, setSalvando] = useState(false)
-  // NOVO: Estados para controlar a edição de cliente
+  // Estados para controlar a edição de cliente
   const [clienteEditandoId, setClienteEditandoId] = useState<number | null>(null)
   const [dialogEdicaoAberto, setDialogEdicaoAberto] = useState(false)
+  // Estados para controlar a visualização de cliente
+  const [clienteVisualizandoId, setClienteVisualizandoId] = useState<number | null>(null)
+  const [dialogVisualizacaoAberto, setDialogVisualizacaoAberto] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
     setLanguage(getLanguage())
-    // NOVO: Carregar clientes ao montar o componente
+    // Carregar clientes ao montar o componente
     carregarClientes()
   }, [])
 
   const t = translations[language]
 
-  // NOVO: Função para carregar clientes do banco de dados
+  // Função para carregar clientes do banco de dados
   const carregarClientes = async () => {
     setLoading(true)
     try {
@@ -91,7 +95,7 @@ export default function ClientesPage() {
     }
   }
 
-  // NOVO: Buscar clientes pelo termo
+  // Buscar clientes pelo termo
   const buscarClientes = async () => {
     if (!termoBusca.trim()) {
       carregarClientes()
@@ -124,7 +128,7 @@ export default function ClientesPage() {
     }
   }
 
-  // NOVO: Excluir cliente
+  // Excluir cliente
   const excluirCliente = async (id: number) => {
     if (
       !confirm(
@@ -172,7 +176,7 @@ export default function ClientesPage() {
     setNovoCliente((prev) => ({ ...prev, [name]: value }))
   }
 
-  // MODIFICADO: Adicionar novo cliente (agora conectado à API)
+  // Adicionar novo cliente (agora conectado à API)
   const adicionarCliente = async () => {
     setSalvando(true)
 
@@ -476,13 +480,12 @@ export default function ClientesPage() {
                           variant="outline"
                           size="icon"
                           onClick={() => {
-                            // Implementar visualização detalhada
-                            // Esta funcionalidade será implementada posteriormente
+                            setClienteVisualizandoId(Number(cliente.id));
+                            setDialogVisualizacaoAberto(true);
                           }}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        {/* MODIFICADO: Botão de edição agora abre o diálogo de edição */}
                         <Button
                           variant="outline"
                           size="icon"
@@ -493,7 +496,6 @@ export default function ClientesPage() {
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        {/* MODIFICADO: Botão de exclusão agora chama a função excluirCliente */}
                         <Button variant="outline" size="icon" onClick={() => excluirCliente(Number(cliente.id))}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -507,12 +509,19 @@ export default function ClientesPage() {
         </CardContent>
       </Card>
 
-      {/* NOVO: Componente de edição de cliente */}
+      {/* Componente de edição de cliente */}
       <EditarCliente
         clienteId={clienteEditandoId}
         aberto={dialogEdicaoAberto}
         onOpenChange={setDialogEdicaoAberto}
         onClienteAtualizado={carregarClientes}
+      />
+
+      {/* Componente de visualização de cliente */}
+      <VisualizarCliente
+        clienteId={clienteVisualizandoId}
+        aberto={dialogVisualizacaoAberto}
+        onOpenChange={setDialogVisualizacaoAberto}
       />
     </div>
   )
