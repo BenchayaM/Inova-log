@@ -2,8 +2,27 @@ import { type NextRequest, NextResponse } from "next/server"
 import { listarClientes, adicionarCliente, buscarClientes } from "@/lib/clients"
 import type { Cliente } from "@/lib/clients"
 
+// Configuração de CORS
+export async function OPTIONS() {
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    },
+  })
+}
+
 // GET - Listar todos os clientes ou buscar por termo
 export async function GET(request: NextRequest) {
+  // Adicionar headers CORS
+  const headers = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  }
+
   try {
     const searchParams = request.nextUrl.searchParams
     const termo = searchParams.get("termo")
@@ -16,76 +35,107 @@ export async function GET(request: NextRequest) {
     }
 
     if (result.success) {
-      return NextResponse.json({ success: true, clientes: result.data })
+      return NextResponse.json({ success: true, clientes: result.data }, { headers })
     } else {
-      return NextResponse.json({ success: false, message: result.message }, { status: 400 })
+      return NextResponse.json({ success: false, message: result.message }, { status: 400, headers })
     }
   } catch (error) {
-    console.error("Erro ao processar requisição:", error)
-    return NextResponse.json({ success: false, message: "Erro interno do servidor" }, { status: 500 })
+    console.error("Erro ao processar requisição GET:", error)
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500, headers: headers },
+    )
   }
 }
 
 // POST - Adicionar novo cliente
 export async function POST(request: NextRequest) {
+  // Adicionar headers CORS
+  const headers = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  }
+
   try {
-    const body = await request.json()
-    console.log("Dados recebidos na API:", body) // Log para depuração
+    // Log da requisição completa
+    console.log("Requisição POST recebida:", {
+      url: request.url,
+      method: request.method,
+      headers: Object.fromEntries(request.headers.entries()),
+    })
+
+    let body
+    try {
+      const text = await request.text()
+      console.log("Corpo da requisição (texto):", text)
+
+      if (!text) {
+        return NextResponse.json({ success: false, message: "Corpo da requisição vazio" }, { status: 400, headers })
+      }
+
+      try {
+        body = JSON.parse(text)
+        console.log("Corpo da requisição (JSON):", body)
+      } catch (parseError) {
+        console.error("Erro ao fazer parse do JSON:", parseError)
+        return NextResponse.json(
+          { success: false, message: "Formato JSON inválido", error: String(parseError) },
+          { status: 400, headers },
+        )
+      }
+    } catch (bodyError) {
+      console.error("Erro ao ler o corpo da requisição:", bodyError)
+      return NextResponse.json(
+        { success: false, message: "Erro ao ler o corpo da requisição", error: String(bodyError) },
+        { status: 400, headers },
+      )
+    }
 
     // Validar apenas campos obrigatórios
     if (!body.nome || !body.email || !body.telefone) {
-      console.log("Campos obrigatórios não preenchidos") // Log para depuração
-      return NextResponse.json({ success: false, message: "Campos obrigatórios não preenchidos" }, { status: 400 })
+      console.log("Campos obrigatórios não preenchidos:", {
+        nome: body.nome,
+        email: body.email,
+        telefone: body.telefone,
+      })
+
+      return NextResponse.json(
+        { success: false, message: "Campos obrigatórios não preenchidos" },
+        { status: 400, headers },
+      )
     }
 
-    // Simplificar o objeto cliente para incluir apenas os campos básicos
+    // Criar objeto cliente com campos mínimos
     const cliente: Cliente = {
       nome: body.nome,
       email: body.email,
       telefone: body.telefone,
-      status: body.status || "Ativo",
+      status: "Ativo",
     }
 
-    // Adicionar campos opcionais apenas se estiverem presentes
-    if (body.endereco) cliente.endereco = body.endereco
-    if (body.cidade) cliente.cidade = body.cidade
-    if (body.estado) cliente.estado = body.estado
-    if (body.pais) cliente.pais = body.pais
-    if (body.cep) cliente.cep = body.cep
-    if (body.contato) cliente.contato = body.contato
-    if (body.observacoes) cliente.observacoes = body.observacoes
-    if (body.telefone_secundario) cliente.telefone_secundario = body.telefone_secundario
-    if (body.website) cliente.website = body.website
-    if (body.cargo_contato) cliente.cargo_contato = body.cargo_contato
-    if (body.cnpj_cpf) cliente.cnpj_cpf = body.cnpj_cpf
-    if (body.inscricao_estadual) cliente.inscricao_estadual = body.inscricao_estadual
-    if (body.regime_tributario) cliente.regime_tributario = body.regime_tributario
-    if (body.segmento) cliente.segmento = body.segmento
-    if (body.condicoes_pagamento) cliente.condicoes_pagamento = body.condicoes_pagamento
-    if (body.classificacao) cliente.classificacao = body.classificacao
-    if (body.origem) cliente.origem = body.origem
-
-    console.log("Enviando para o banco de dados:", cliente) // Log para depuração
+    console.log("Cliente a ser adicionado:", cliente)
     const result = await adicionarCliente(cliente)
-    console.log("Resultado da operação:", result) // Log para depuração
+    console.log("Resultado da operação:", result)
 
     if (result.success) {
-      return NextResponse.json({
-        success: true,
-        message: result.message,
-        id: result.id,
-      })
+      return NextResponse.json({ success: true, message: result.message, id: result.id }, { headers })
     } else {
-      return NextResponse.json({ success: false, message: result.message }, { status: 400 })
+      return NextResponse.json({ success: false, message: result.message }, { status: 400, headers })
     }
   } catch (error) {
-    console.error("Erro ao processar requisição:", error)
+    console.error("Erro ao processar requisição POST:", error)
     return NextResponse.json(
       {
         success: false,
-        message: "Erro interno do servidor: " + (error instanceof Error ? error.message : String(error)),
+        message: "Erro interno do servidor",
+        error: error instanceof Error ? error.message : String(error),
       },
-      { status: 500 },
+      { status: 500, headers },
     )
   }
 }
