@@ -1,4 +1,4 @@
-// Funções para gerenciamento de clientes no banco de dados Braslink
+// Funções para gerenciamento de clientes no banco de dados
 import { query } from "./db"
 
 export interface Cliente {
@@ -26,6 +26,12 @@ export async function listarClientes() {
   try {
     console.log("Listando todos os clientes")
     const result = await query("SELECT * FROM clientes ORDER BY nome")
+
+    if (!result.success) {
+      console.error("Erro retornado pela query:", result.message)
+      return { success: false, message: result.message || "Erro ao listar clientes" }
+    }
+
     console.log(`Clientes encontrados: ${(result.data as any[]).length}`)
     return { success: true, data: result.data }
   } catch (error) {
@@ -42,6 +48,12 @@ export async function buscarClientePorId(id: number) {
   try {
     console.log(`Buscando cliente com ID: ${id}`)
     const result = await query("SELECT * FROM clientes WHERE id = ?", [id])
+
+    if (!result.success) {
+      console.error("Erro retornado pela query:", result.message)
+      return { success: false, message: result.message || "Erro ao buscar cliente" }
+    }
+
     const clientes = result.data as any[]
 
     if (clientes && clientes.length > 0) {
@@ -67,6 +79,7 @@ export async function adicionarCliente(cliente: Cliente) {
 
     // Garantir que os campos obrigatórios estejam presentes
     if (!cliente.nome || !cliente.email) {
+      console.error("Nome e email são obrigatórios")
       return { success: false, message: "Nome e email são obrigatórios" }
     }
 
@@ -86,7 +99,6 @@ export async function adicionarCliente(cliente: Cliente) {
       inscricao_estadual: cliente.inscricao_estadual || null,
       cargo_contato: cliente.cargo_contato || null,
       segmento: cliente.segmento || null,
-      observacoes: cliente.observacoes || null,
     }
 
     // Construir a query dinamicamente
@@ -99,18 +111,17 @@ export async function adicionarCliente(cliente: Cliente) {
     console.log("Valores:", valores)
 
     const result = await query(sql, valores)
-    console.log("Resultado da query:", result)
 
-    if (result.success) {
-      console.log("Cliente adicionado com sucesso, ID:", (result.data as any).insertId)
-      return {
-        success: true,
-        message: "Cliente adicionado com sucesso",
-        id: (result.data as any).insertId,
-      }
-    } else {
+    if (!result.success) {
       console.error("Erro retornado pela query:", result.message)
       return { success: false, message: result.message || "Erro ao adicionar cliente" }
+    }
+
+    console.log("Cliente adicionado com sucesso, ID:", (result.data as any).insertId)
+    return {
+      success: true,
+      message: "Cliente adicionado com sucesso",
+      id: (result.data as any).insertId,
     }
   } catch (error) {
     console.error("Exceção ao adicionar cliente:", error)
@@ -128,6 +139,7 @@ export async function atualizarCliente(id: number, cliente: Partial<Cliente>) {
 
     // Verificar se há campos para atualizar
     if (Object.keys(cliente).length === 0) {
+      console.error("Nenhum campo fornecido para atualização")
       return { success: false, message: "Nenhum campo fornecido para atualização" }
     }
 
@@ -149,18 +161,17 @@ export async function atualizarCliente(id: number, cliente: Partial<Cliente>) {
     console.log("Valores:", valores)
 
     const result = await query(sql, valores)
-    console.log("Resultado da query:", result)
 
-    if (result.success) {
-      console.log("Cliente atualizado com sucesso, linhas afetadas:", (result.data as any).affectedRows)
-      return {
-        success: true,
-        message: "Cliente atualizado com sucesso",
-        affectedRows: (result.data as any).affectedRows,
-      }
-    } else {
+    if (!result.success) {
       console.error("Erro retornado pela query:", result.message)
       return { success: false, message: result.message || "Erro ao atualizar cliente" }
+    }
+
+    console.log("Cliente atualizado com sucesso, linhas afetadas:", (result.data as any).affectedRows)
+    return {
+      success: true,
+      message: "Cliente atualizado com sucesso",
+      affectedRows: (result.data as any).affectedRows,
     }
   } catch (error) {
     console.error(`Erro ao atualizar cliente com ID ${id}:`, error)
@@ -176,17 +187,18 @@ export async function excluirCliente(id: number) {
   try {
     console.log(`Excluindo cliente com ID: ${id}`)
     const result = await query("DELETE FROM clientes WHERE id = ?", [id])
-    console.log("Resultado da query:", result)
 
-    if (result.success && (result.data as any).affectedRows > 0) {
-      console.log("Cliente excluído com sucesso")
-      return { success: true, message: "Cliente excluído com sucesso" }
-    } else if (result.success && (result.data as any).affectedRows === 0) {
-      console.log(`Cliente com ID ${id} não encontrado para exclusão`)
-      return { success: false, message: "Cliente não encontrado" }
-    } else {
+    if (!result.success) {
       console.error("Erro retornado pela query:", result.message)
       return { success: false, message: result.message || "Erro ao excluir cliente" }
+    }
+
+    if ((result.data as any).affectedRows > 0) {
+      console.log("Cliente excluído com sucesso")
+      return { success: true, message: "Cliente excluído com sucesso" }
+    } else {
+      console.log(`Cliente com ID ${id} não encontrado para exclusão`)
+      return { success: false, message: "Cliente não encontrado" }
     }
   } catch (error) {
     console.error(`Erro ao excluir cliente com ID ${id}:`, error)
@@ -204,10 +216,15 @@ export async function buscarClientes(termo: string) {
     const termoPesquisa = `%${termo}%`
     const result = await query(
       `SELECT * FROM clientes 
-     WHERE nome LIKE ? OR email LIKE ? OR telefone LIKE ? OR cidade LIKE ? OR estado LIKE ? OR cnpj_cpf LIKE ?
-     ORDER BY nome`,
+       WHERE nome LIKE ? OR email LIKE ? OR telefone LIKE ? OR cidade LIKE ? OR estado LIKE ? OR cnpj_cpf LIKE ?
+       ORDER BY nome`,
       [termoPesquisa, termoPesquisa, termoPesquisa, termoPesquisa, termoPesquisa, termoPesquisa],
     )
+
+    if (!result.success) {
+      console.error("Erro retornado pela query:", result.message)
+      return { success: false, message: result.message || "Erro ao buscar clientes" }
+    }
 
     console.log(`Clientes encontrados: ${(result.data as any[]).length}`)
     return { success: true, data: result.data }
