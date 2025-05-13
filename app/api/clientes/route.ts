@@ -30,9 +30,17 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // Validar campos obrigatórios
-    if (!body.nome || !body.email || !body.telefone || !body.status) {
-      return NextResponse.json({ success: false, message: "Campos obrigatórios não preenchidos" }, { status: 400 });
+    // Validar apenas campos realmente obrigatórios
+    if (!body.nome || !body.email || !body.telefone) {
+      return NextResponse.json({ 
+        success: false, 
+        message: "Campos obrigatórios não preenchidos (Nome, Email e Telefone são obrigatórios)" 
+      }, { status: 400 });
+    }
+
+    // Definir status como "Ativo" por padrão se não for fornecido
+    if (!body.status) {
+      body.status = "Ativo";
     }
 
     const result = await adicionarCliente(body);
