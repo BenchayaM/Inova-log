@@ -42,7 +42,6 @@ export default function ClientesPage() {
     inscricao_estadual: "",
     cargo_contato: "",
     segmento: "",
-    observacoes: "",
   })
   const [dialogAberto, setDialogAberto] = useState(false)
   const [tabAtiva, setTabAtiva] = useState("informacoes")
@@ -222,20 +221,12 @@ export default function ClientesPage() {
     console.log("Enviando dados:", novoCliente)
 
     try {
-      // Criar um objeto com apenas os campos obrigatórios
-      const clienteMinimo = {
-        nome: novoCliente.nome,
-        email: novoCliente.email,
-      }
-
-      console.log("Enviando cliente mínimo:", clienteMinimo)
-
       const response = await fetch("/api/clientes", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(clienteMinimo),
+        body: JSON.stringify(novoCliente),
       })
 
       console.log("Status da resposta:", response.status)
@@ -278,7 +269,6 @@ export default function ClientesPage() {
           inscricao_estadual: "",
           cargo_contato: "",
           segmento: "",
-          observacoes: "",
         })
         setDialogAberto(false)
         setTabAtiva("informacoes")
@@ -500,18 +490,6 @@ export default function ClientesPage() {
                       placeholder="Ex: Construção Civil, Varejo, etc."
                     />
                   </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="observacoes">Observações</Label>
-                    <textarea
-                      id="observacoes"
-                      name="observacoes"
-                      value={novoCliente.observacoes}
-                      onChange={handleChange}
-                      placeholder="Observações adicionais sobre o cliente"
-                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    />
-                  </div>
                 </div>
               </TabsContent>
             </Tabs>
@@ -643,8 +621,6 @@ export default function ClientesPage() {
           </Table>
         </CardContent>
       </Card>
-
-      {/* Componentes de edição e visualização seriam adicionados aqui */}
     </div>
   )
 }
