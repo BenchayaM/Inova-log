@@ -3,21 +3,32 @@ export const getLanguage = () => {
     return "pt" // Default to Portuguese on the server-side
   }
 
-  // Check for a language preference stored by the login page
-  // This could be in localStorage, cookies, or another storage mechanism used by your app
-  const storedLanguage =
-    localStorage.getItem("selectedLanguage") ||
-    sessionStorage.getItem("selectedLanguage") ||
-    document.documentElement.getAttribute("data-language") ||
-    document.documentElement.lang
+  // Try to get language from various sources
+  try {
+    // Check for a language preference stored by the login page
+    const storedLanguage =
+      localStorage.getItem("selectedLanguage") ||
+      sessionStorage.getItem("selectedLanguage") ||
+      document.documentElement.getAttribute("data-language") ||
+      document.documentElement.lang
 
-  if (storedLanguage === "en" || storedLanguage === "pt") {
-    return storedLanguage
+    if (storedLanguage === "en" || storedLanguage === "pt") {
+      return storedLanguage
+    }
+  } catch (e) {
+    console.log("Error accessing storage:", e)
+    // Continue to fallback
   }
 
-  // Fall back to browser language
-  const language = navigator.language || navigator.languages[0] || "pt"
-  return language.startsWith("en") ? "en" : "pt"
+  // Fall back to browser language if available
+  try {
+    const language = navigator.language || (navigator.languages && navigator.languages[0]) || "pt"
+    return language.startsWith("en") ? "en" : "pt"
+  } catch (e) {
+    console.log("Error accessing navigator language:", e)
+    // Final fallback
+    return "pt"
+  }
 }
 
 export const translations = {
@@ -75,39 +86,18 @@ export const translations = {
   },
 }
 
-// Function to listen for language changes
+// Simplified language change detection
 export const setupLanguageListener = (callback: (lang: string) => void) => {
   if (typeof window === "undefined") return () => {}
 
-  // Create a MutationObserver to watch for changes to the html element's attributes
-  const observer = new MutationObserver((mutations) => {
-    mutations.forEach((mutation) => {
-      if (
-        mutation.type === "attributes" &&
-        (mutation.attributeName === "lang" || mutation.attributeName === "data-language")
-      ) {
-        const newLang = getLanguage()
-        callback(newLang)
-      }
-    })
-  })
+  // Check for language changes periodically
+  const interval = setInterval(() => {
+    const newLang = getLanguage()
+    callback(newLang)
+  }, 2000)
 
-  // Start observing the document with the configured parameters
-  observer.observe(document.documentElement, { attributes: true })
-
-  // Also check for storage events (in case language is stored in localStorage)
-  const handleStorageChange = (event: StorageEvent) => {
-    if (event.key === "selectedLanguage") {
-      const newLang = getLanguage()
-      callback(newLang)
-    }
-  }
-
-  window.addEventListener("storage", handleStorageChange)
-
-  // Return a cleanup function
+  // Return cleanup function
   return () => {
-    observer.disconnect()
-    window.removeEventListener("storage", handleStorageChange)
+    clearInterval(interval)
   }
 }
