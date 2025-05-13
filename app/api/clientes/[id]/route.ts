@@ -90,6 +90,14 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       )
     }
 
+    // Validar campos obrigatórios
+    if (!body.nome || !body.email) {
+      return NextResponse.json(
+        { success: false, message: "Campos obrigatórios não preenchidos (nome e email)" },
+        { status: 400, headers: corsHeaders },
+      )
+    }
+
     const result = await atualizarCliente(id, body)
 
     if (result.success) {
