@@ -1,4 +1,3 @@
-// lib/i18n.ts
 // Função para obter o idioma do usuário
 export const getLanguage = () => {
   if (typeof window === "undefined") {
