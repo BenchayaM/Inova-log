@@ -1,6 +1,5 @@
 // Funções para gerenciamento de clientes no banco de dados
 import { query } from "./db"
-import bcrypt from "bcryptjs"
 
 export interface Cliente {
   id?: number
@@ -21,6 +20,19 @@ export interface Cliente {
   segmento?: string
   observacoes?: string
   senha?: string // Campo adicionado para senha
+}
+
+// Função simples para "criptografar" senha (temporária, não segura para produção)
+async function hashSenha(senha: string): Promise<string> {
+  // Esta é uma implementação temporária e NÃO SEGURA
+  // Em produção, você deve usar bcrypt ou outra biblioteca de criptografia
+  return Buffer.from(senha).toString("base64")
+}
+
+// Função simples para verificar senha (temporária, não segura para produção)
+async function verificarSenha(senha: string, hash: string): Promise<boolean> {
+  // Esta é uma implementação temporária e NÃO SEGURA
+  return Buffer.from(senha).toString("base64") === hash
 }
 
 // Listar todos os clientes
@@ -123,7 +135,7 @@ export async function adicionarCliente(cliente: Cliente) {
     // Hash da senha se fornecida
     let senhaHash = null
     if (cliente.senha) {
-      senhaHash = await bcrypt.hash(cliente.senha, 10)
+      senhaHash = await hashSenha(cliente.senha)
       console.log("Senha criptografada com sucesso")
     }
 
@@ -201,7 +213,7 @@ export async function atualizarCliente(id: number, cliente: Partial<Cliente>) {
 
     // Hash da senha se fornecida
     if (cliente.senha) {
-      clienteAtualizado.senha = await bcrypt.hash(cliente.senha, 10)
+      clienteAtualizado.senha = await hashSenha(cliente.senha)
       console.log("Senha atualizada e criptografada com sucesso")
     }
 
@@ -319,7 +331,7 @@ export async function verificarCredenciaisCliente(email: string, senha: string) 
     }
 
     // Verificar se a senha está correta
-    const senhaCorreta = await bcrypt.compare(senha, cliente.senha)
+    const senhaCorreta = await verificarSenha(senha, cliente.senha)
 
     if (!senhaCorreta) {
       return { success: false, message: "Email ou senha incorretos" }
@@ -348,7 +360,7 @@ export async function definirSenhaCliente(id: number, senha: string) {
     console.log(`Definindo senha para cliente com ID: ${id}`)
 
     // Hash da senha
-    const senhaHash = await bcrypt.hash(senha, 10)
+    const senhaHash = await hashSenha(senha)
 
     // Atualizar apenas o campo senha
     const result = await query("UPDATE clientes SET senha = ? WHERE id = ?", [senhaHash, id])
