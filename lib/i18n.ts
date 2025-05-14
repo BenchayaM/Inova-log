@@ -1,3 +1,14 @@
+// lib/i18n.ts
+// Função para obter o idioma do usuário
+export const getLanguage = () => {
+  if (typeof window === "undefined") {
+    return "pt" // Default to Portuguese on the server-side
+  }
+
+  const language = navigator.language || navigator.languages[0] || "pt"
+  return language.startsWith("en") ? "en" : "pt"
+}
+
 // Definições de traduções
 export const translations = {
   pt: {
@@ -56,5 +67,3 @@ export const translations = {
 
 // Tipo para as chaves de idioma suportadas
 export type SupportedLanguage = "pt" | "en"
-
-// Hook para usar o idioma (implementado no componente)
