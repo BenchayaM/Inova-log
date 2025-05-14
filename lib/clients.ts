@@ -1,5 +1,6 @@
 // Funções para gerenciamento de clientes no banco de dados
 import { query } from "./db"
+import bcrypt from "bcryptjs"
 
 export interface Cliente {
   id?: number
@@ -19,6 +20,7 @@ export interface Cliente {
   cargo_contato?: string
   segmento?: string
   observacoes?: string
+  senha?: string // Campo adicionado para senha
 }
 
 // Listar todos os clientes
@@ -72,6 +74,35 @@ export async function buscarClientePorId(id: number) {
   }
 }
 
+// Buscar cliente por email
+export async function buscarClientePorEmail(email: string) {
+  try {
+    console.log(`Buscando cliente com email: ${email}`)
+    const result = await query("SELECT * FROM clientes WHERE email = ?", [email])
+
+    if (!result.success) {
+      console.error("Erro retornado pela query:", result.message)
+      return { success: false, message: result.message || "Erro ao buscar cliente" }
+    }
+
+    const clientes = result.data as any[]
+
+    if (clientes && clientes.length > 0) {
+      console.log("Cliente encontrado:", clientes[0])
+      return { success: true, data: clientes[0] }
+    } else {
+      console.log(`Cliente com email ${email} não encontrado`)
+      return { success: false, message: "Cliente não encontrado" }
+    }
+  } catch (error) {
+    console.error(`Erro ao buscar cliente com email ${email}:`, error)
+    return {
+      success: false,
+      message: "Erro ao buscar cliente: " + (error instanceof Error ? error.message : String(error)),
+    }
+  }
+}
+
 // Adicionar novo cliente
 export async function adicionarCliente(cliente: Cliente) {
   try {
@@ -81,6 +112,19 @@ export async function adicionarCliente(cliente: Cliente) {
     if (!cliente.nome || !cliente.email) {
       console.error("Nome e email são obrigatórios")
       return { success: false, message: "Nome e email são obrigatórios" }
+    }
+
+    // Verificar se o email já está em uso
+    const emailExistente = await buscarClientePorEmail(cliente.email)
+    if (emailExistente.success) {
+      return { success: false, message: "Este email já está cadastrado" }
+    }
+
+    // Hash da senha se fornecida
+    let senhaHash = null
+    if (cliente.senha) {
+      senhaHash = await bcrypt.hash(cliente.senha, 10)
+      console.log("Senha criptografada com sucesso")
     }
 
     // Definir valores padrão para campos não fornecidos
@@ -99,6 +143,7 @@ export async function adicionarCliente(cliente: Cliente) {
       inscricao_estadual: cliente.inscricao_estadual || null,
       cargo_contato: cliente.cargo_contato || null,
       segmento: cliente.segmento || null,
+      senha: senhaHash, // Senha criptografada
     }
 
     // Construir a query dinamicamente
@@ -143,13 +188,30 @@ export async function atualizarCliente(id: number, cliente: Partial<Cliente>) {
       return { success: false, message: "Nenhum campo fornecido para atualização" }
     }
 
+    // Se estiver atualizando o email, verificar se já está em uso por outro cliente
+    if (cliente.email) {
+      const emailExistente = await buscarClientePorEmail(cliente.email)
+      if (emailExistente.success && emailExistente.data.id !== id) {
+        return { success: false, message: "Este email já está sendo usado por outro cliente" }
+      }
+    }
+
+    // Criar uma cópia do cliente para não modificar o original
+    const clienteAtualizado = { ...cliente }
+
+    // Hash da senha se fornecida
+    if (cliente.senha) {
+      clienteAtualizado.senha = await bcrypt.hash(cliente.senha, 10)
+      console.log("Senha atualizada e criptografada com sucesso")
+    }
+
     // Construir a query dinamicamente
-    const updateFields = Object.entries(cliente)
+    const updateFields = Object.entries(clienteAtualizado)
       .filter(([key]) => key !== "id" && key !== "data_cadastro")
       .map(([key]) => `${key} = ?`)
       .join(", ")
 
-    const valores = Object.entries(cliente)
+    const valores = Object.entries(clienteAtualizado)
       .filter(([key]) => key !== "id" && key !== "data_cadastro")
       .map(([, value]) => (value === "" ? null : value))
 
@@ -233,6 +295,81 @@ export async function buscarClientes(termo: string) {
     return {
       success: false,
       message: "Erro ao buscar clientes: " + (error instanceof Error ? error.message : String(error)),
+    }
+  }
+}
+
+// Verificar credenciais do cliente (login)
+export async function verificarCredenciaisCliente(email: string, senha: string) {
+  try {
+    console.log(`Verificando credenciais para o email: ${email}`)
+
+    // Buscar cliente pelo email
+    const result = await buscarClientePorEmail(email)
+
+    if (!result.success) {
+      return { success: false, message: "Email ou senha incorretos" }
+    }
+
+    const cliente = result.data
+
+    // Verificar se o cliente tem senha cadastrada
+    if (!cliente.senha) {
+      return { success: false, message: "Este cliente não possui senha cadastrada" }
+    }
+
+    // Verificar se a senha está correta
+    const senhaCorreta = await bcrypt.compare(senha, cliente.senha)
+
+    if (!senhaCorreta) {
+      return { success: false, message: "Email ou senha incorretos" }
+    }
+
+    // Remover a senha do objeto cliente antes de retornar
+    const { senha: _, ...clienteSemSenha } = cliente
+
+    return {
+      success: true,
+      message: "Login realizado com sucesso",
+      cliente: clienteSemSenha,
+    }
+  } catch (error) {
+    console.error("Erro ao verificar credenciais:", error)
+    return {
+      success: false,
+      message: "Erro ao verificar credenciais: " + (error instanceof Error ? error.message : String(error)),
+    }
+  }
+}
+
+// Definir senha para cliente existente
+export async function definirSenhaCliente(id: number, senha: string) {
+  try {
+    console.log(`Definindo senha para cliente com ID: ${id}`)
+
+    // Hash da senha
+    const senhaHash = await bcrypt.hash(senha, 10)
+
+    // Atualizar apenas o campo senha
+    const result = await query("UPDATE clientes SET senha = ? WHERE id = ?", [senhaHash, id])
+
+    if (!result.success) {
+      console.error("Erro retornado pela query:", result.message)
+      return { success: false, message: result.message || "Erro ao definir senha" }
+    }
+
+    if ((result.data as any).affectedRows > 0) {
+      console.log("Senha definida com sucesso")
+      return { success: true, message: "Senha definida com sucesso" }
+    } else {
+      console.log(`Cliente com ID ${id} não encontrado`)
+      return { success: false, message: "Cliente não encontrado" }
+    }
+  } catch (error) {
+    console.error(`Erro ao definir senha para cliente com ID ${id}:`, error)
+    return {
+      success: false,
+      message: "Erro ao definir senha: " + (error instanceof Error ? error.message : String(error)),
     }
   }
 }
