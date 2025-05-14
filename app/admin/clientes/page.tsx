@@ -19,12 +19,11 @@ import {
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Search, Plus, Edit, Trash2, Eye, Loader2 } from "lucide-react"
+import { Search, Plus, Edit, Trash2, Eye, Loader2, Key } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import type { Cliente } from "@/lib/clients"
 import VisualizarCliente from "./visualizar-cliente"
 import EditarCliente from "./editar-cliente"
-import { getLanguage, translations, setupLanguageListener } from "@/lib/i18n"
 
 export default function ClientesPage() {
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -45,6 +44,7 @@ export default function ClientesPage() {
     inscricao_estadual: "",
     cargo_contato: "",
     segmento: "",
+    senha: "", // Campo adicionado para senha
   })
   const [dialogAberto, setDialogAberto] = useState(false)
   const [tabAtiva, setTabAtiva] = useState("informacoes")
@@ -52,23 +52,20 @@ export default function ClientesPage() {
   const [clienteSelecionado, setClienteSelecionado] = useState<number | null>(null)
   const [editarDialogAberto, setEditarDialogAberto] = useState(false)
   const [visualizarDialogAberto, setVisualizarDialogAberto] = useState(false)
+  const [senhaDialogAberto, setSenhaDialogAberto] = useState(false)
   const { toast } = useToast()
-  const [language, setLanguage] = useState(getLanguage())
-  const t = translations[language as keyof typeof translations]
+  const [language, setLanguage] = useState<"pt" | "en">("pt")
 
   useEffect(() => {
-    // Set initial language
-    setLanguage(getLanguage())
-
-    // Setup listener for language changes
-    const cleanup = setupLanguageListener((newLang) => {
-      console.log("Language changed to:", newLang)
-      setLanguage(newLang)
-    })
+    // Tentar detectar o idioma do usuário
+    try {
+      const storedLang = localStorage.getItem("selectedLanguage")
+      if (storedLang === "en") setLanguage("en")
+    } catch (e) {
+      console.error("Erro ao acessar localStorage:", e)
+    }
 
     carregarClientes()
-
-    return cleanup
   }, [])
 
   // Carregar clientes do banco de dados
@@ -297,6 +294,7 @@ export default function ClientesPage() {
           inscricao_estadual: "",
           cargo_contato: "",
           segmento: "",
+          senha: "",
         })
         setDialogAberto(false)
         setTabAtiva("informacoes")
@@ -322,41 +320,90 @@ export default function ClientesPage() {
     }
   }
 
+  // Definir senha para cliente
+  const definirSenha = async (id: number, senha: string) => {
+    try {
+      const response = await fetch(`/api/clientes/${id}/senha`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ senha }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Erro HTTP: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (data.success) {
+        toast({
+          title: language === "pt" ? "Senha definida" : "Password set",
+          description:
+            language === "pt"
+              ? "A senha do cliente foi definida com sucesso"
+              : "Client password has been successfully set",
+        })
+        return true
+      } else {
+        toast({
+          title: language === "pt" ? "Erro" : "Error",
+          description: data.message || (language === "pt" ? "Erro ao definir senha" : "Error setting password"),
+          variant: "destructive",
+        })
+        return false
+      }
+    } catch (error) {
+      console.error("Erro ao definir senha:", error)
+      toast({
+        title: language === "pt" ? "Erro" : "Error",
+        description: language === "pt" ? "Erro ao conectar ao servidor" : "Error connecting to server",
+        variant: "destructive",
+      })
+      return false
+    }
+  }
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">{t.clientManagement}</h1>
+        <h1 className="text-2xl font-bold">{language === "pt" ? "Gerenciamento de Clientes" : "Client Management"}</h1>
 
         <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
-              {t.newClient}
+              {language === "pt" ? "Novo Cliente" : "New Client"}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
-              <DialogTitle>{t.addClient}</DialogTitle>
+              <DialogTitle>{language === "pt" ? "Adicionar Cliente" : "Add Client"}</DialogTitle>
               <DialogDescription>
-                {t.clientData} <span className="text-red-500">*</span>{" "}
-                {language === "pt" ? "Campos obrigatórios" : "Required fields"}
+                {language === "pt" ? "Preencha os dados do cliente abaixo:" : "Fill in the client data below:"}{" "}
+                <span className="text-red-500">*</span> {language === "pt" ? "Campos obrigatórios" : "Required fields"}
               </DialogDescription>
             </DialogHeader>
 
             <Tabs value={tabAtiva} onValueChange={setTabAtiva} className="w-full mt-4">
-              <TabsList className="grid grid-cols-3">
-                <TabsTrigger value="informacoes">{t.generalInfo}</TabsTrigger>
+              <TabsList className="grid grid-cols-4">
+                <TabsTrigger value="informacoes">
+                  {language === "pt" ? "Informações Gerais" : "General Information"}
+                </TabsTrigger>
                 <TabsTrigger value="endereco">{language === "pt" ? "Endereço" : "Address"}</TabsTrigger>
                 <TabsTrigger value="fiscal">
                   {language === "pt" ? "Informações Fiscais" : "Tax Information"}
                 </TabsTrigger>
+                <TabsTrigger value="acesso">{language === "pt" ? "Acesso" : "Access"}</TabsTrigger>
               </TabsList>
 
               <TabsContent value="informacoes" className="space-y-4 mt-4">
                 <div className="grid gap-4">
                   <div className="grid gap-2">
                     <Label htmlFor="nome" className="flex items-center">
-                      {t.companyName} <span className="text-red-500 ml-1">*</span>
+                      {language === "pt" ? "Nome da Empresa" : "Company Name"}{" "}
+                      <span className="text-red-500 ml-1">*</span>
                     </Label>
                     <Input
                       id="nome"
@@ -395,7 +442,7 @@ export default function ClientesPage() {
                   </div>
 
                   <div className="grid gap-2">
-                    <Label htmlFor="contato">{t.contactPerson}</Label>
+                    <Label htmlFor="contato">{language === "pt" ? "Pessoa de Contato" : "Contact Person"}</Label>
                     <Input
                       id="contato"
                       name="contato"
@@ -425,8 +472,8 @@ export default function ClientesPage() {
                       onChange={handleChange}
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      <option value="Ativo">{t.active}</option>
-                      <option value="Inativo">{t.inactive}</option>
+                      <option value="Ativo">{language === "pt" ? "Ativo" : "Active"}</option>
+                      <option value="Inativo">{language === "pt" ? "Inativo" : "Inactive"}</option>
                     </select>
                   </div>
                 </div>
@@ -535,11 +582,48 @@ export default function ClientesPage() {
                   </div>
                 </div>
               </TabsContent>
+
+              <TabsContent value="acesso" className="space-y-4 mt-4">
+                <div className="grid gap-4">
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 text-yellow-800">
+                    <h4 className="font-medium mb-2">
+                      {language === "pt" ? "Informações de Acesso" : "Access Information"}
+                    </h4>
+                    <p className="text-sm">
+                      {language === "pt"
+                        ? "Defina uma senha para que o cliente possa acessar o sistema. O email será usado como login."
+                        : "Set a password for the client to access the system. The email will be used as login."}
+                    </p>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="senha">{language === "pt" ? "Senha" : "Password"}</Label>
+                    <Input
+                      id="senha"
+                      name="senha"
+                      type="password"
+                      value={novoCliente.senha}
+                      onChange={handleChange}
+                      placeholder={language === "pt" ? "Digite a senha" : "Enter password"}
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="confirmarSenha">{language === "pt" ? "Confirmar Senha" : "Confirm Password"}</Label>
+                    <Input
+                      id="confirmarSenha"
+                      name="confirmarSenha"
+                      type="password"
+                      placeholder={language === "pt" ? "Confirme a senha" : "Confirm password"}
+                    />
+                  </div>
+                </div>
+              </TabsContent>
             </Tabs>
 
             <DialogFooter className="mt-6">
               <Button variant="outline" onClick={() => setDialogAberto(false)}>
-                {t.cancel}
+                {language === "pt" ? "Cancelar" : "Cancel"}
               </Button>
               <Button onClick={adicionarCliente} disabled={salvando}>
                 {salvando ? (
@@ -604,7 +688,7 @@ export default function ClientesPage() {
                   {language === "pt" ? "Cidade/Estado" : "City/State"}
                 </TableHead>
                 <TableHead>{language === "pt" ? "Status" : "Status"}</TableHead>
-                <TableHead>{t.actions}</TableHead>
+                <TableHead>{language === "pt" ? "Ações" : "Actions"}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -635,7 +719,13 @@ export default function ClientesPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={cliente.status === "Ativo" ? "success" : "secondary"}>
-                        {cliente.status === "Ativo" ? t.active : t.inactive}
+                        {cliente.status === "Ativo"
+                          ? language === "pt"
+                            ? "Ativo"
+                            : "Active"
+                          : language === "pt"
+                            ? "Inativo"
+                            : "Inactive"}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -647,6 +737,7 @@ export default function ClientesPage() {
                             setClienteSelecionado(cliente.id!)
                             setVisualizarDialogAberto(true)
                           }}
+                          title={language === "pt" ? "Visualizar" : "View"}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -657,10 +748,34 @@ export default function ClientesPage() {
                             setClienteSelecionado(cliente.id!)
                             setEditarDialogAberto(true)
                           }}
+                          title={language === "pt" ? "Editar" : "Edit"}
                         >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="outline" size="icon" onClick={() => excluirCliente(cliente.id!)}>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            // Abrir diálogo para definir senha
+                            const senha = prompt(
+                              language === "pt"
+                                ? "Digite a nova senha para o cliente:"
+                                : "Enter new password for client:",
+                            )
+                            if (senha) {
+                              definirSenha(cliente.id!, senha)
+                            }
+                          }}
+                          title={language === "pt" ? "Definir Senha" : "Set Password"}
+                        >
+                          <Key className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => excluirCliente(cliente.id!)}
+                          title={language === "pt" ? "Excluir" : "Delete"}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
