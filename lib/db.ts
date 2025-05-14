@@ -1,4 +1,4 @@
-// lib/db.ts - Versão simplificada para diagnóstico
+// lib/db.ts - Versão atualizada com executeQuery
 import mysql from "mysql2/promise"
 
 // Configuração da conexão com o banco de dados
@@ -62,6 +62,11 @@ export async function query(sql: string, params: any[] = []) {
         "Erro ao executar consulta no banco de dados: " + (error instanceof Error ? error.message : String(error)),
     }
   }
+}
+
+// Adicionar a função executeQuery que está faltando
+export async function executeQuery(sql: string, params: any[] = []) {
+  return query(sql, params)
 }
 
 // Exportar a função query como padrão para manter compatibilidade com código existente
