@@ -9,6 +9,12 @@ export const getLanguage = () => {
   return language.startsWith("en") ? "en" : "pt"
 }
 
+// Função para obter as traduções com base no idioma
+export const getTranslations = (lang?: string) => {
+  const language = lang || getLanguage()
+  return translations[language as SupportedLanguage]
+}
+
 // Definições de traduções
 export const translations = {
   pt: {
