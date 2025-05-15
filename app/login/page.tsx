@@ -59,54 +59,148 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-white">
-      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md mx-auto">
-        <div className="flex justify-center mb-4">
-          <div className="flex space-x-4">
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "100vh",
+        width: "100%",
+        backgroundColor: "white",
+        padding: "20px",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "400px",
+          padding: "30px",
+          backgroundColor: "white",
+          borderRadius: "8px",
+          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+          margin: "0 auto",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: "16px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              gap: "16px",
+            }}
+          >
             <button
               onClick={() => setLang("pt")}
-              className={`px-3 py-1 rounded ${language === "pt" ? "bg-[#153462] text-white" : "bg-gray-100"}`}
+              style={{
+                padding: "4px 12px",
+                borderRadius: "4px",
+                backgroundColor: language === "pt" ? "#153462" : "#f3f4f6",
+                color: language === "pt" ? "white" : "black",
+                border: "1px solid #d1d5db",
+                cursor: "pointer",
+              }}
             >
               Português
             </button>
             <button
               onClick={() => setLang("en")}
-              className={`px-3 py-1 rounded ${language === "en" ? "bg-[#153462] text-white" : "bg-gray-100"}`}
+              style={{
+                padding: "4px 12px",
+                borderRadius: "4px",
+                backgroundColor: language === "en" ? "#153462" : "#f3f4f6",
+                color: language === "en" ? "white" : "black",
+                border: "1px solid #d1d5db",
+                cursor: "pointer",
+              }}
             >
               English
             </button>
           </div>
         </div>
 
-        <div className="flex justify-center mb-8">
-          <h1 className="text-2xl font-bold text-[#153462]">InovaLog</h1>
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: "32px",
+          }}
+        >
+          <h1
+            style={{
+              fontSize: "24px",
+              fontWeight: "bold",
+              color: "#153462",
+            }}
+          >
+            InovaLog
+          </h1>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-6">
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <User className="h-5 w-5 text-[#153462]" />
+        <form
+          onSubmit={handleLogin}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "24px",
+          }}
+        >
+          <div style={{ position: "relative" }}>
+            <div
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "12px",
+                transform: "translateY(-50%)",
+                pointerEvents: "none",
+              }}
+            >
+              <User size={20} color="#153462" />
             </div>
             <Input
               type="email"
               placeholder={translations[language].user}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="pl-10 py-6 bg-gray-50 border-gray-300 rounded-lg w-full"
+              style={{
+                width: "100%",
+                padding: "12px 12px 12px 40px",
+                backgroundColor: "#f9fafb",
+                borderColor: "#d1d5db",
+                borderRadius: "8px",
+              }}
               required
             />
           </div>
 
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-              <Lock className="h-5 w-5 text-[#153462]" />
+          <div style={{ position: "relative" }}>
+            <div
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "12px",
+                transform: "translateY(-50%)",
+                pointerEvents: "none",
+              }}
+            >
+              <Lock size={20} color="#153462" />
             </div>
             <Input
               type="password"
               placeholder={translations[language].pass}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 py-6 bg-gray-50 border-gray-300 rounded-lg w-full"
+              style={{
+                width: "100%",
+                padding: "12px 12px 12px 40px",
+                backgroundColor: "#f9fafb",
+                borderColor: "#d1d5db",
+                borderRadius: "8px",
+              }}
               required
             />
           </div>
@@ -114,13 +208,34 @@ export default function LoginPage() {
           <Button
             type="submit"
             disabled={isLoading}
-            className="w-full py-6 text-lg bg-[#153462] hover:bg-[#0c2547] text-white rounded-lg"
+            style={{
+              width: "100%",
+              padding: "12px",
+              fontSize: "18px",
+              backgroundColor: "#153462",
+              color: "white",
+              borderRadius: "8px",
+              cursor: isLoading ? "not-allowed" : "pointer",
+            }}
           >
             {isLoading ? "..." : translations[language].login}
           </Button>
 
-          <div className="text-center">
-            <span className="text-[#153462] cursor-pointer hover:underline">{translations[language].forgot}</span>
+          <div
+            style={{
+              textAlign: "center",
+            }}
+          >
+            <span
+              style={{
+                color: "#153462",
+                cursor: "pointer",
+                textDecoration: "none",
+              }}
+              className="hover:underline"
+            >
+              {translations[language].forgot}
+            </span>
           </div>
         </form>
       </div>
