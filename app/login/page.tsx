@@ -33,26 +33,35 @@ export default function LoginPage() {
     e.preventDefault()
     setIsLoading(true)
 
-    try {
-      // Verificar credenciais
-      if (email === "admin@inova-log.com" && password === "admin123") {
-        router.push("/admin/dashboard")
-      } else if (email === "cliente@inova-log.com" && password === "cliente123") {
-        router.push("/cliente/dashboard")
-      } else {
+    // Pequeno atraso para garantir que o estado seja atualizado
+    setTimeout(() => {
+      try {
+        console.log("Tentando login com:", email, password)
+
+        // Verificar credenciais
+        if (email === "admin@inova-log.com" && password === "admin123") {
+          console.log("Login de admin bem-sucedido, redirecionando...")
+          window.location.href = "/admin/dashboard"
+        } else if (email === "cliente@inova-log.com" && password === "cliente123") {
+          console.log("Login de cliente bem-sucedido, redirecionando...")
+          window.location.href = "/cliente/dashboard"
+        } else {
+          console.log("Credenciais inválidas")
+          toast({
+            title: translations[language].invalid,
+            variant: "destructive",
+          })
+          setIsLoading(false)
+        }
+      } catch (error) {
+        console.error("Erro durante o login:", error)
         toast({
           title: translations[language].invalid,
           variant: "destructive",
         })
+        setIsLoading(false)
       }
-    } catch (error) {
-      toast({
-        title: translations[language].invalid,
-        variant: "destructive",
-      })
-    } finally {
-      setIsLoading(false)
-    }
+    }, 500)
   }
 
   return (
