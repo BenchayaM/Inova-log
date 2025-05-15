@@ -65,19 +65,19 @@ export default function LoginPage() {
         <div className="flex justify-between mb-8">
           <div className="flex flex-col items-center cursor-pointer" onClick={() => setLang("pt")}>
             <div className="w-12 h-8 relative overflow-hidden rounded">
-              <Image src="https://flagcdn.com/w320/br.png" alt="BR" fill className="object-cover" />
+              <Image src="https://flagcdn.com/w320/br.png" alt="BR" fill className="object-cover" unoptimized />
             </div>
             <span className={`mt-1 text-sm ${language === "pt" ? "font-bold text-[#153462]" : ""}`}>BR</span>
           </div>
           <div className="flex flex-col items-center cursor-pointer" onClick={() => setLang("en")}>
             <div className="w-12 h-8 relative overflow-hidden rounded">
-              <Image src="https://flagcdn.com/w320/us.png" alt="US" fill className="object-cover" />
+              <Image src="https://flagcdn.com/w320/us.png" alt="US" fill className="object-cover" unoptimized />
             </div>
             <span className={`mt-1 text-sm ${language === "en" ? "font-bold text-[#153462]" : ""}`}>US</span>
           </div>
           <div className="flex flex-col items-center cursor-pointer">
             <div className="w-12 h-8 relative overflow-hidden rounded">
-              <Image src="https://flagcdn.com/w320/cn.png" alt="CN" fill className="object-cover" />
+              <Image src="https://flagcdn.com/w320/cn.png" alt="CN" fill className="object-cover" unoptimized />
             </div>
             <span className="mt-1 text-sm">CN</span>
           </div>
@@ -85,7 +85,7 @@ export default function LoginPage() {
 
         <div className="flex justify-center mb-8">
           <div className="w-[200px] h-[60px] relative">
-            <Image src="/images/logo.png" alt="InovaLog" fill className="object-contain" />
+            <Image src="/images/logo.png" alt="InovaLog" fill className="object-contain" unoptimized />
           </div>
         </div>
 
