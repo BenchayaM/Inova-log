@@ -60,7 +60,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-white">
-      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
+      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md mx-auto">
         <div className="flex justify-center mb-4">
           <div className="flex space-x-4">
             <button
@@ -92,7 +92,7 @@ export default function LoginPage() {
               placeholder={translations[language].user}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="pl-10 py-6 bg-gray-50 border-gray-300 rounded-lg"
+              className="pl-10 py-6 bg-gray-50 border-gray-300 rounded-lg w-full"
               required
             />
           </div>
@@ -106,7 +106,7 @@ export default function LoginPage() {
               placeholder={translations[language].pass}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="pl-10 py-6 bg-gray-50 border-gray-300 rounded-lg"
+              className="pl-10 py-6 bg-gray-50 border-gray-300 rounded-lg w-full"
               required
             />
           </div>
