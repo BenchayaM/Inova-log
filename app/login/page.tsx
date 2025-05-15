@@ -4,8 +4,6 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { User, Lock } from "lucide-react"
 import { translations } from "@/lib/i18n"
@@ -66,18 +64,18 @@ export default function LoginPage() {
         alignItems: "center",
         minHeight: "100vh",
         width: "100%",
-        backgroundColor: "white",
+        backgroundColor: "#f5f5f5",
         padding: "20px",
       }}
     >
       <div
         style={{
           width: "100%",
-          maxWidth: "400px",
-          padding: "30px",
+          maxWidth: "420px",
+          padding: "40px",
           backgroundColor: "white",
-          borderRadius: "8px",
-          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+          borderRadius: "12px",
+          boxShadow: "0 8px 16px rgba(0, 0, 0, 0.1)",
           margin: "0 auto",
         }}
       >
@@ -85,7 +83,7 @@ export default function LoginPage() {
           style={{
             display: "flex",
             justifyContent: "center",
-            marginBottom: "16px",
+            marginBottom: "24px",
           }}
         >
           <div
@@ -97,12 +95,14 @@ export default function LoginPage() {
             <button
               onClick={() => setLang("pt")}
               style={{
-                padding: "4px 12px",
-                borderRadius: "4px",
+                padding: "8px 16px",
+                borderRadius: "6px",
                 backgroundColor: language === "pt" ? "#153462" : "#f3f4f6",
-                color: language === "pt" ? "white" : "black",
+                color: language === "pt" ? "white" : "#333",
                 border: "1px solid #d1d5db",
                 cursor: "pointer",
+                fontWeight: language === "pt" ? "bold" : "normal",
+                transition: "all 0.2s ease",
               }}
             >
               Português
@@ -110,12 +110,14 @@ export default function LoginPage() {
             <button
               onClick={() => setLang("en")}
               style={{
-                padding: "4px 12px",
-                borderRadius: "4px",
+                padding: "8px 16px",
+                borderRadius: "6px",
                 backgroundColor: language === "en" ? "#153462" : "#f3f4f6",
-                color: language === "en" ? "white" : "black",
+                color: language === "en" ? "white" : "#333",
                 border: "1px solid #d1d5db",
                 cursor: "pointer",
+                fontWeight: language === "en" ? "bold" : "normal",
+                transition: "all 0.2s ease",
               }}
             >
               English
@@ -130,15 +132,17 @@ export default function LoginPage() {
             marginBottom: "32px",
           }}
         >
-          <h1
-            style={{
-              fontSize: "24px",
-              fontWeight: "bold",
-              color: "#153462",
-            }}
-          >
-            InovaLog
-          </h1>
+          <div style={{ width: "200px", height: "60px", position: "relative" }}>
+            <img
+              src="/images/logo.png"
+              alt="InovaLog"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "contain",
+              }}
+            />
+          </div>
         </div>
 
         <form
@@ -154,25 +158,31 @@ export default function LoginPage() {
               style={{
                 position: "absolute",
                 top: "50%",
-                left: "12px",
+                left: "16px",
                 transform: "translateY(-50%)",
                 pointerEvents: "none",
+                zIndex: 1,
               }}
             >
               <User size={20} color="#153462" />
             </div>
-            <Input
+            <input
               type="email"
               placeholder={translations[language].user}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               style={{
                 width: "100%",
-                padding: "12px 12px 12px 40px",
-                backgroundColor: "#f9fafb",
-                borderColor: "#d1d5db",
+                padding: "14px 14px 14px 46px",
+                backgroundColor: "#f0f4f8",
+                border: "1px solid #d1d5db",
                 borderRadius: "8px",
+                fontSize: "16px",
+                outline: "none",
+                transition: "border-color 0.2s ease, box-shadow 0.2s ease",
               }}
+              onFocus={(e) => (e.target.style.borderColor = "#153462")}
+              onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
               required
             />
           </div>
@@ -182,57 +192,71 @@ export default function LoginPage() {
               style={{
                 position: "absolute",
                 top: "50%",
-                left: "12px",
+                left: "16px",
                 transform: "translateY(-50%)",
                 pointerEvents: "none",
+                zIndex: 1,
               }}
             >
               <Lock size={20} color="#153462" />
             </div>
-            <Input
+            <input
               type="password"
               placeholder={translations[language].pass}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               style={{
                 width: "100%",
-                padding: "12px 12px 12px 40px",
-                backgroundColor: "#f9fafb",
-                borderColor: "#d1d5db",
+                padding: "14px 14px 14px 46px",
+                backgroundColor: "#f0f4f8",
+                border: "1px solid #d1d5db",
                 borderRadius: "8px",
+                fontSize: "16px",
+                outline: "none",
+                transition: "border-color 0.2s ease, box-shadow 0.2s ease",
               }}
+              onFocus={(e) => (e.target.style.borderColor = "#153462")}
+              onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
               required
             />
           </div>
 
-          <Button
+          <button
             type="submit"
             disabled={isLoading}
             style={{
               width: "100%",
-              padding: "12px",
-              fontSize: "18px",
+              padding: "14px",
+              fontSize: "16px",
+              fontWeight: "bold",
               backgroundColor: "#153462",
               color: "white",
+              border: "none",
               borderRadius: "8px",
               cursor: isLoading ? "not-allowed" : "pointer",
+              transition: "background-color 0.2s ease",
+              marginTop: "8px",
             }}
+            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#0c2547")}
+            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#153462")}
           >
             {isLoading ? "..." : translations[language].login}
-          </Button>
+          </button>
 
           <div
             style={{
               textAlign: "center",
+              marginTop: "8px",
             }}
           >
             <span
               style={{
                 color: "#153462",
                 cursor: "pointer",
-                textDecoration: "none",
+                fontSize: "14px",
               }}
-              className="hover:underline"
+              onMouseOver={(e) => (e.currentTarget.style.textDecoration = "underline")}
+              onMouseOut={(e) => (e.currentTarget.style.textDecoration = "none")}
             >
               {translations[language].forgot}
             </span>
