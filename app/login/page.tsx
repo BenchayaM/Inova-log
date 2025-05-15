@@ -4,7 +4,6 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
@@ -61,32 +60,26 @@ export default function LoginPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-white">
-      <div className="w-full max-w-md p-8">
-        <div className="flex justify-between mb-8">
-          <div className="flex flex-col items-center cursor-pointer" onClick={() => setLang("pt")}>
-            <div className="w-12 h-8 relative overflow-hidden rounded">
-              <Image src="https://flagcdn.com/w320/br.png" alt="BR" fill className="object-cover" />
-            </div>
-            <span className={`mt-1 text-sm ${language === "pt" ? "font-bold text-[#153462]" : ""}`}>BR</span>
-          </div>
-          <div className="flex flex-col items-center cursor-pointer" onClick={() => setLang("en")}>
-            <div className="w-12 h-8 relative overflow-hidden rounded">
-              <Image src="https://flagcdn.com/w320/us.png" alt="US" fill className="object-cover" />
-            </div>
-            <span className={`mt-1 text-sm ${language === "en" ? "font-bold text-[#153462]" : ""}`}>US</span>
-          </div>
-          <div className="flex flex-col items-center cursor-pointer">
-            <div className="w-12 h-8 relative overflow-hidden rounded">
-              <Image src="https://flagcdn.com/w320/cn.png" alt="CN" fill className="object-cover" />
-            </div>
-            <span className="mt-1 text-sm">CN</span>
+      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-md">
+        <div className="flex justify-center mb-4">
+          <div className="flex space-x-4">
+            <button
+              onClick={() => setLang("pt")}
+              className={`px-3 py-1 rounded ${language === "pt" ? "bg-[#153462] text-white" : "bg-gray-100"}`}
+            >
+              Português
+            </button>
+            <button
+              onClick={() => setLang("en")}
+              className={`px-3 py-1 rounded ${language === "en" ? "bg-[#153462] text-white" : "bg-gray-100"}`}
+            >
+              English
+            </button>
           </div>
         </div>
 
         <div className="flex justify-center mb-8">
-          <div className="w-[200px] h-[60px] relative">
-            <Image src="/images/logo.png" alt="InovaLog" fill className="object-contain" />
-          </div>
+          <h1 className="text-2xl font-bold text-[#153462]">InovaLog</h1>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-6">
