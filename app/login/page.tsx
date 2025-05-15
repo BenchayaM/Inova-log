@@ -5,7 +5,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useToast } from "@/hooks/use-toast"
-import { User, Lock } from "lucide-react"
+import { User, Lock, Briefcase } from "lucide-react"
 import { translations } from "@/lib/i18n"
 
 export default function LoginPage() {
@@ -57,166 +57,68 @@ export default function LoginPage() {
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        minHeight: "100vh",
-        width: "100%",
-        backgroundColor: "#f5f5f5",
-        padding: "20px",
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "420px",
-          padding: "40px",
-          backgroundColor: "white",
-          borderRadius: "12px",
-          boxShadow: "0 8px 16px rgba(0, 0, 0, 0.1)",
-          margin: "0 auto",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            marginBottom: "24px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              gap: "16px",
-            }}
-          >
+    <div className="flex justify-center items-center min-h-screen w-full bg-gray-100 p-4">
+      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
+        {/* Seletor de idioma */}
+        <div className="flex justify-center mb-6">
+          <div className="flex gap-3">
             <button
               onClick={() => setLang("pt")}
-              style={{
-                padding: "8px 16px",
-                borderRadius: "6px",
-                backgroundColor: language === "pt" ? "#153462" : "#f3f4f6",
-                color: language === "pt" ? "white" : "#333",
-                border: "1px solid #d1d5db",
-                cursor: "pointer",
-                fontWeight: language === "pt" ? "bold" : "normal",
-                transition: "all 0.2s ease",
-              }}
+              className={`px-4 py-2 rounded-md border transition-colors ${
+                language === "pt"
+                  ? "bg-[#153462] text-white font-medium"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
             >
               Português
             </button>
             <button
               onClick={() => setLang("en")}
-              style={{
-                padding: "8px 16px",
-                borderRadius: "6px",
-                backgroundColor: language === "en" ? "#153462" : "#f3f4f6",
-                color: language === "en" ? "white" : "#333",
-                border: "1px solid #d1d5db",
-                cursor: "pointer",
-                fontWeight: language === "en" ? "bold" : "normal",
-                transition: "all 0.2s ease",
-              }}
+              className={`px-4 py-2 rounded-md border transition-colors ${
+                language === "en"
+                  ? "bg-[#153462] text-white font-medium"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
             >
               English
             </button>
           </div>
         </div>
 
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            marginBottom: "32px",
-          }}
-        >
-          <div style={{ width: "200px", height: "60px", position: "relative" }}>
-            <img
-              src="/images/logo.png"
-              alt="InovaLog"
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "contain",
-              }}
-            />
+        {/* Logo */}
+        <div className="flex justify-center items-center mb-8">
+          <div className="flex items-center">
+            <Briefcase className="h-10 w-10 text-[#153462]" />
+            <span className="text-3xl font-bold text-[#153462] ml-2">Inova-Log</span>
           </div>
         </div>
 
-        <form
-          onSubmit={handleLogin}
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "24px",
-          }}
-        >
-          <div style={{ position: "relative" }}>
-            <div
-              style={{
-                position: "absolute",
-                top: "50%",
-                left: "16px",
-                transform: "translateY(-50%)",
-                pointerEvents: "none",
-                zIndex: 1,
-              }}
-            >
-              <User size={20} color="#153462" />
+        {/* Formulário */}
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <User className="h-5 w-5 text-[#153462]" />
             </div>
             <input
               type="email"
               placeholder={translations[language].user}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "14px 14px 14px 46px",
-                backgroundColor: "#f0f4f8",
-                border: "1px solid #d1d5db",
-                borderRadius: "8px",
-                fontSize: "16px",
-                outline: "none",
-                transition: "border-color 0.2s ease, box-shadow 0.2s ease",
-              }}
-              onFocus={(e) => (e.target.style.borderColor = "#153462")}
-              onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+              className="w-full pl-10 pr-4 py-3 bg-blue-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#153462] focus:border-transparent"
               required
             />
           </div>
 
-          <div style={{ position: "relative" }}>
-            <div
-              style={{
-                position: "absolute",
-                top: "50%",
-                left: "16px",
-                transform: "translateY(-50%)",
-                pointerEvents: "none",
-                zIndex: 1,
-              }}
-            >
-              <Lock size={20} color="#153462" />
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Lock className="h-5 w-5 text-[#153462]" />
             </div>
             <input
               type="password"
               placeholder={translations[language].pass}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "14px 14px 14px 46px",
-                backgroundColor: "#f0f4f8",
-                border: "1px solid #d1d5db",
-                borderRadius: "8px",
-                fontSize: "16px",
-                outline: "none",
-                transition: "border-color 0.2s ease, box-shadow 0.2s ease",
-              }}
-              onFocus={(e) => (e.target.style.borderColor = "#153462")}
-              onBlur={(e) => (e.target.style.borderColor = "#d1d5db")}
+              className="w-full pl-10 pr-4 py-3 bg-blue-50 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#153462] focus:border-transparent"
               required
             />
           </div>
@@ -224,44 +126,16 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            style={{
-              width: "100%",
-              padding: "14px",
-              fontSize: "16px",
-              fontWeight: "bold",
-              backgroundColor: "#153462",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              cursor: isLoading ? "not-allowed" : "pointer",
-              transition: "background-color 0.2s ease",
-              marginTop: "8px",
-            }}
-            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#0c2547")}
-            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#153462")}
+            className="w-full py-3 bg-[#153462] text-white font-medium rounded-lg hover:bg-[#0c2547] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#153462]"
           >
             {isLoading ? "..." : translations[language].login}
           </button>
-
-          <div
-            style={{
-              textAlign: "center",
-              marginTop: "8px",
-            }}
-          >
-            <span
-              style={{
-                color: "#153462",
-                cursor: "pointer",
-                fontSize: "14px",
-              }}
-              onMouseOver={(e) => (e.currentTarget.style.textDecoration = "underline")}
-              onMouseOut={(e) => (e.currentTarget.style.textDecoration = "none")}
-            >
-              {translations[language].forgot}
-            </span>
-          </div>
         </form>
+
+        {/* Link para recuperar senha */}
+        <div className="text-center mt-6">
+          <button className="text-[#153462] hover:underline text-sm">{translations[language].forgot}</button>
+        </div>
       </div>
     </div>
   )
