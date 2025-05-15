@@ -1,12 +1,19 @@
-app/admin/contas
-app/admin/dashboard
-app/admin/documentos
-app/admin/financeiro
-app/admin/orcamentos
-app/admin/pedidos
-app/admin/produtos
-app/cliente/contas
-app/cliente/dashboard
-app/cliente/documentos
-app/cliente/orcamentos
-app/cliente/pedidos
+# Comentando as pastas que precisamos manter
+# app/admin/contas
+# app/admin/dashboard
+# app/admin/documentos
+# app/admin/financeiro
+# app/admin/orcamentos
+# app/admin/pedidos
+# app/admin/produtos
+# app/cliente/contas
+# app/cliente/dashboard
+# app/cliente/documentos
+# app/cliente/orcamentos
+# app/cliente/pedidos
+# app/login
+
+# Manter apenas pastas que realmente não são necessárias
+# Exemplo:
+# temp
+# .git
