@@ -85,7 +85,7 @@ export default function LoginPage() {
 
         <div className="flex justify-center mb-8">
           <div className="w-[200px] h-[60px] relative">
-            <Image src="/images/logo.png" alt="InovaLog" fill className="object-contain" unoptimized />
+            <Image src="/images/logo.png" alt="InovaLog" fill className="object-contain" />
           </div>
         </div>
 
