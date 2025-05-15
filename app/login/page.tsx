@@ -64,6 +64,7 @@ export default function LoginPage() {
         minHeight: "100vh",
         backgroundColor: "#f0f2f5",
         padding: "20px",
+        boxSizing: "border-box",
       }}
     >
       <div
@@ -74,6 +75,7 @@ export default function LoginPage() {
           borderRadius: "8px",
           boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
           padding: "30px 20px",
+          boxSizing: "border-box",
         }}
       >
         {/* Seletor de idioma */}
@@ -127,20 +129,28 @@ export default function LoginPage() {
             marginBottom: "30px",
           }}
         >
-          <h1
+          <div
             style={{
-              fontSize: "28px",
-              fontWeight: "bold",
-              color: "#153462",
+              width: "180px",
+              height: "60px",
+              position: "relative",
             }}
           >
-            InovaLog
-          </h1>
+            <img
+              src="/images/logo.png"
+              alt="InovaLog"
+              style={{
+                maxWidth: "100%",
+                maxHeight: "100%",
+                objectFit: "contain",
+              }}
+            />
+          </div>
         </div>
 
         {/* Formulário */}
         <form onSubmit={handleLogin}>
-          <div style={{ marginBottom: "16px" }}>
+          <div style={{ marginBottom: "16px", boxSizing: "border-box", width: "100%" }}>
             <input
               type="email"
               placeholder={translations[language].user}
@@ -152,12 +162,13 @@ export default function LoginPage() {
                 borderRadius: "4px",
                 border: "1px solid #d1d5db",
                 fontSize: "16px",
+                boxSizing: "border-box",
               }}
               required
             />
           </div>
 
-          <div style={{ marginBottom: "24px" }}>
+          <div style={{ marginBottom: "24px", boxSizing: "border-box", width: "100%" }}>
             <input
               type="password"
               placeholder={translations[language].pass}
@@ -169,6 +180,7 @@ export default function LoginPage() {
                 borderRadius: "4px",
                 border: "1px solid #d1d5db",
                 fontSize: "16px",
+                boxSizing: "border-box",
               }}
               required
             />
@@ -188,6 +200,7 @@ export default function LoginPage() {
               fontWeight: "bold",
               cursor: isLoading ? "not-allowed" : "pointer",
               marginBottom: "16px",
+              boxSizing: "border-box",
             }}
           >
             {isLoading ? "..." : translations[language].login}
